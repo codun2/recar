@@ -140,7 +140,7 @@ class InvoiceController extends Controller
 
         $invoice->syncPaymentState();
 
-        AppNotification::push('payment', [
+        AppNotification::notify('payment', [
             'title_ar' => 'دفعة جديدة',
             'title_en' => 'Payment received',
             'body_ar'  => "دفعة {$data['amount']} على الفاتورة {$invoice->number}",

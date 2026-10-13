@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>سيّار — دخول لوحة التحكم</title>
+  <link rel="stylesheet" href="/assets/dash.css">
+</head>
+<body>
+  <div class="rc-auth">
+    <div class="topbar"><div class="rc-lang"><button class="rc-lang-opt" data-lang="ar">ع</button><button class="rc-lang-opt" data-lang="en">EN</button></div></div>
+    <div class="rc-auth-card">
+      <div class="brand"><span class="mark">🚗</span><span data-i18n="app"></span></div>
+      <div class="sub" data-i18n="dashboard"></div>
+      <form class="rc-form" id="loginf">
+        <div class="rc-field"><label data-i18n="email"></label><input class="rc-input" name="email" type="email" required></div>
+        <div class="rc-field"><label data-i18n="password"></label><input class="rc-input" name="password" type="password" required></div>
+        <button class="rc-btn" type="submit" data-i18n="signin"></button>
+      </form>
+      <div class="rc-auth-links"><a href="/" data-i18n="back"></a></div>
+    </div>
+  </div>
+  <script>window.AREA = 'admin';</script>
+  <script src="/assets/core.js"></script>
+  <script>
+    RC.initLang();
+    if (RC.token.get()) location.href = '/admin/index.html';
+    document.getElementById('loginf').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const f = e.target, d = { email: f.email.value, password: f.password.value };
+      try {
+        const r = await RC.api('POST', '/admin/login', d);
+        RC.token.set(r.token);
+        if (r.company) RC.setCurrency(r.company.currency);
+        location.href = '/admin/index.html';
+      } catch (err) { RC.toast(err.message || 'خطأ', 'err'); }
+    });
+  </script>
+</body>
+</html>

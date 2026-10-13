@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>سيّار — حساب جديد</title>
+  <link rel="stylesheet" href="/assets/dash.css">
+</head>
+<body>
+  <div class="rc-auth">
+    <div class="topbar"><div class="rc-lang"><button class="rc-lang-opt" data-lang="ar">ع</button><button class="rc-lang-opt" data-lang="en">EN</button></div></div>
+    <div class="rc-auth-card">
+      <div class="brand"><span class="mark">🚗</span><span data-i18n="app"></span></div>
+      <div class="sub" data-i18n="signup"></div>
+      <form class="rc-form" id="suf">
+        <div class="rc-field"><label data-i18n="company"></label><select class="rc-select" name="company" id="company" required></select></div>
+        <div class="rc-field"><label data-i18n="name"></label><input class="rc-input" name="name" required></div>
+        <div class="rc-field"><label data-i18n="phone"></label><input class="rc-input" name="phone"></div>
+        <div class="rc-field"><label data-i18n="email"></label><input class="rc-input" name="email" type="email" required></div>
+        <div class="rc-field"><label data-i18n="password"></label><input class="rc-input" name="password" type="password" required></div>
+        <button class="rc-btn" type="submit" data-i18n="signup"></button>
+      </form>
+      <div class="rc-auth-links"><span data-i18n="have_account"></span> <a href="/account/login.html" data-i18n="signin"></a></div>
+    </div>
+  </div>
+  <script>window.AREA = 'customer';</script>
+  <script src="/assets/core.js"></script>
+  <script>
+    RC.initLang();
+    (async function () {
+      try { const cs = await RC.api('GET', '/companies'); document.getElementById('company').innerHTML = cs.map(function (c) { return '<option value="' + c.slug + '">' + c.name + '</option>'; }).join(''); } catch (e) {}
+    })();
+    document.getElementById('suf').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const f = e.target;
+      const d = { company: f.company.value, name: f.name.value, phone: f.phone.value, email: f.email.value, password: f.password.value };
+      try {
+        const r = await RC.api('POST', '/customer/register', d);
+        RC.token.set(r.token);
+        if (r.company) RC.setCurrency(r.company.currency);
+        location.href = '/account/index.html';
+      } catch (err) { RC.toast(err.message || 'خطأ', 'err'); if (err.data && err.data.errors) { const k = Object.keys(err.data.errors)[0]; RC.toast(err.data.errors[k][0], 'err'); } }
+    });
+  </script>
+</body>
+</html>

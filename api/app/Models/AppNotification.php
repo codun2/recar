@@ -35,7 +35,7 @@ class AppNotification extends Model
     }
 
     /** Create a notification for the current company (optionally a user). */
-    public static function push(string $type, array $attrs, ?int $userId = null): self
+    public static function notify(string $type, array $attrs, ?int $userId = null): self
     {
         return self::create(array_merge($attrs, ['type' => $type, 'user_id' => $userId]));
     }

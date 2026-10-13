@@ -74,7 +74,7 @@ class BookingController extends Controller
 
         $booking->update(['reference' => 'BK-'.str_pad((string) $booking->id, 5, '0', STR_PAD_LEFT)]);
 
-        AppNotification::push('booking', [
+        AppNotification::notify('booking', [
             'title_ar' => 'طلب حجز جديد',
             'title_en' => 'New booking request',
             'body_ar'  => "طلب حجز {$booking->reference} من {$customer->name}",

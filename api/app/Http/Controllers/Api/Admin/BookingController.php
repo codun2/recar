@@ -68,7 +68,7 @@ class BookingController extends Controller
             $car->update(['status' => 'rented']);
         }
 
-        AppNotification::push('booking', [
+        AppNotification::notify('booking', [
             'title_ar' => 'حجز جديد',
             'title_en' => 'New booking',
             'body_ar'  => "حجز {$booking->reference} للسيارة {$car->name_ar}",
