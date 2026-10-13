@@ -8,21 +8,27 @@
 
 ## Phases
 - [x] 0. دراسة القالب + نسخ الهيكل + تنظيف كود vet
-- [ ] 1. البنية: tenancy trait + middleware + bootstrap aliases + config + User/Company
-- [ ] 2. Migrations لكل الكيانات (companies, plans, categories, cars, customers, bookings, invoices, invoice_items, payments, notifications, settings)
-- [ ] 3. Models + العلاقات
-- [ ] 4. Controllers — Super (auth, companies, plans, dashboard)
-- [ ] 5. Controllers — Admin (dashboard, cars, categories, customers, bookings, invoices, payments, notifications, staff, settings)
-- [ ] 6. Controllers — Account/Public (auth, browse cars, bookings, invoices, company registration)
-- [ ] 7. routes/api.php
-- [ ] 8. Seeders (خطة + منصّة + شركة تجريبية ببيانات)
+- [x] 1. البنية: tenancy trait + middleware + bootstrap aliases + config + User/Company
+- [x] 2. Migrations لكل الكيانات
+- [x] 3. Models + العلاقات
+- [x] 4. Controllers — Super (auth, companies, plans, dashboard)
+- [x] 5. Controllers — Admin (dashboard, cars, categories, customers, bookings, invoices, payments, notifications, staff, settings)
+- [x] 6. Controllers — Account/Public (auth, browse cars, bookings, invoices, company registration)
+- [x] 7. routes/api.php
+- [x] 8. Seeders (خطة + منصّة + شركة تجريبية ببيانات)
+- [x] 12. Infra — docker-compose (dev+prod) + Dockerfile + .nginx + .env
 - [ ] 9. Frontend — index.html (تسويق) يبقى + تحديث روابط
 - [ ] 10. Frontend — admin/ (dashboard + كل الصفحات) ثنائي اللغة
 - [ ] 11. Frontend — super/ + account/
-- [ ] 12. Infra — docker-compose (dev+prod) + Dockerfile + .nginx + .env
 - [ ] 13. بناء الحاوية والاختبار على بورت مؤقت + migrate/seed
 - [ ] 14. deploy.sh (docker) + تحديث PORTS.md (نسخ محلية جاهزة للـ cutover)
 - [ ] 15. Cutover: merge→main + host deploy.sh + host nginx vhost + reload
+
+## بيانات دخول تجريبية (seed)
+- Super: super@recar.sa / password
+- Admin الشركة: admin@sayyar.sa / password  (slug: sayyar-demo)
+- Staff: staff@sayyar.sa / password
+- Customer: customer@sayyar.sa / password
 
 ## Conventions
 - الصلاحيات (staff perms): cars, categories, bookings, customers, invoices, notifications, staff, settings

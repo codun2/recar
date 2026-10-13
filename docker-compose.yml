@@ -1,51 +1,57 @@
-# Layla Vet — full stack: static site (nginx) + Laravel API + MySQL
-# One command runs everything: docker compose up -d
+# سيّار (recar) — dev stack: static site (nginx) + Laravel API + MySQL
+# One command: docker compose up -d
+name: recar
+
 services:
-  vet-web:
+  recar-web:
     image: nginx:alpine
-    container_name: vet-clinic
+    container_name: recar-web
     restart: unless-stopped
     ports:
-      - "8087:80"
+      - "8092:80"
     volumes:
       - .:/usr/share/nginx/html:ro
       - ./.nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-    networks: [vet-net]
+    depends_on:
+      - recar-api
+    networks: [recar-net]
 
-  vet-db:
+  recar-db:
     image: mysql:8.0
-    container_name: vet-db
+    container_name: recar-db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: secret
-      MYSQL_DATABASE: vet
+      MYSQL_DATABASE: recar
+      MYSQL_USER: recar
+      MYSQL_PASSWORD: recar
+      MYSQL_ROOT_PASSWORD: root
     ports:
-      - "3399:3306"
+      - "33010:3306"
     volumes:
-      - vet-db-data:/var/lib/mysql
+      - recar-db-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-psecret"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
       interval: 5s
       timeout: 3s
       retries: 20
-    networks: [vet-net]
+    networks: [recar-net]
 
-  vet-api:
+  recar-api:
     build: ./api
-    container_name: vet-api
+    container_name: recar-api
     restart: unless-stopped
     working_dir: /app
     volumes:
       - ./api:/app
     ports:
-      - "8088:8000"
+      - "8091:8000"
     depends_on:
-      vet-db:
+      recar-db:
         condition: service_healthy
-    networks: [vet-net]
+    networks: [recar-net]
 
 volumes:
-  vet-db-data:
+  recar-db-data:
 
 networks:
-  vet-net:
+  recar-net:

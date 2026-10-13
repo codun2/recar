@@ -1,138 +1,159 @@
 <?php
 
-use App\Http\Controllers\Api\AdminAppointmentController;
+use App\Http\Controllers\Api\Account\BookingController as AccountBookingController;
+use App\Http\Controllers\Api\Account\CarController as AccountCarController;
+use App\Http\Controllers\Api\Account\InvoiceController as AccountInvoiceController;
+use App\Http\Controllers\Api\Admin\BookingController;
+use App\Http\Controllers\Api\Admin\CarController;
+use App\Http\Controllers\Api\Admin\CategoryController;
+use App\Http\Controllers\Api\Admin\CustomerController;
+use App\Http\Controllers\Api\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Api\Admin\InvoiceController;
+use App\Http\Controllers\Api\Admin\NotificationController;
+use App\Http\Controllers\Api\Admin\PaymentController;
+use App\Http\Controllers\Api\Admin\SettingController;
+use App\Http\Controllers\Api\Admin\StaffController;
 use App\Http\Controllers\Api\AdminAuthController;
-use App\Http\Controllers\Api\AdminClientController;
-use App\Http\Controllers\Api\AdminInventoryController;
-use App\Http\Controllers\Api\AdminMessageController;
-use App\Http\Controllers\Api\AdminPetController;
-use App\Http\Controllers\Api\AdminSettingController;
-use App\Http\Controllers\Api\AdminStaffController;
-use App\Http\Controllers\Api\AdoptionController;
-use App\Http\Controllers\Api\AppointmentController;
-use App\Http\Controllers\Api\ClinicRegistrationController;
 use App\Http\Controllers\Api\CustomerAuthController;
-use App\Http\Controllers\Api\MessageController;
-use App\Http\Controllers\Api\PetController;
+use App\Http\Controllers\Api\PublicController;
+use App\Http\Controllers\Api\Super\CompanyController;
+use App\Http\Controllers\Api\Super\DashboardController as SuperDashboardController;
+use App\Http\Controllers\Api\Super\PlanController;
 use App\Http\Controllers\Api\SuperAuthController;
-use App\Http\Controllers\Api\Super\ClinicController;
 use Illuminate\Support\Facades\Route;
 
-// Public — adoption ads shown on the homepage (no auth; aggregated across clinics).
-Route::get('adoptions', [AdoptionController::class, 'publicIndex']);
-Route::get('team', [AdminStaffController::class, 'publicIndex']);
+/*
+|--------------------------------------------------------------------------
+| Public (no auth, no tenant context)
+|--------------------------------------------------------------------------
+*/
+Route::get('companies', [PublicController::class, 'companies']);
+Route::get('companies/{slug}', [PublicController::class, 'company']);
+Route::get('companies/{slug}/cars', [PublicController::class, 'cars']);
 
-// Public — clinic self-registration + the list of active clinics used by the
-// pet-owner signup form to pick which clinic the account belongs to.
-Route::get('clinics', [ClinicRegistrationController::class, 'publicList']);
-Route::post('clinics/register', [ClinicRegistrationController::class, 'register']);
-Route::get('clinics/{slug}', [ClinicRegistrationController::class, 'publicShow']);
-
-// Pet-owner (customer) area — mirrors Matnokh's /api/customer/* namespace.
+/*
+|--------------------------------------------------------------------------
+| Customer self-service portal
+|--------------------------------------------------------------------------
+*/
 Route::prefix('customer')->group(function () {
     Route::post('register', [CustomerAuthController::class, 'register']);
     Route::post('login', [CustomerAuthController::class, 'login']);
 
-    Route::middleware(['auth:sanctum', 'clinic'])->group(function () {
+    Route::middleware(['auth:sanctum', 'company'])->group(function () {
         Route::get('me', [CustomerAuthController::class, 'me']);
         Route::post('logout', [CustomerAuthController::class, 'logout']);
 
-        // Pets — read-only for owners (data is created/edited by clinic staff)
-        Route::get('pets', [PetController::class, 'index']);
-        Route::get('pets/{pet}', [PetController::class, 'show']);
+        Route::get('cars', [AccountCarController::class, 'index']);
+        Route::get('cars/{car}', [AccountCarController::class, 'show']);
 
-        // Appointments — owners can view and request a booking (clinic confirms it)
-        Route::get('appointments', [AppointmentController::class, 'index']);
-        Route::post('appointments', [AppointmentController::class, 'store']);
+        Route::get('bookings', [AccountBookingController::class, 'index']);
+        Route::post('bookings', [AccountBookingController::class, 'store']);
+        Route::get('bookings/{booking}', [AccountBookingController::class, 'show']);
+        Route::post('bookings/{booking}/cancel', [AccountBookingController::class, 'cancel']);
 
-        // Messages to the clinic
-        Route::post('messages', [MessageController::class, 'store']);
-
-        // Payment history (recorded by the clinic)
-        Route::get('payments', [CustomerAuthController::class, 'payments']);
-
-        // Adoption ads posted by the owner
-        Route::get('adoptions/mine', [AdoptionController::class, 'mine']);
-        Route::post('adoptions', [AdoptionController::class, 'store']);
-        Route::delete('adoptions/{adoption}', [AdoptionController::class, 'destroy']);
+        Route::get('invoices', [AccountInvoiceController::class, 'index']);
+        Route::get('invoices/{invoice}', [AccountInvoiceController::class, 'show']);
     });
 });
 
-// Clinic staff/admin area — mirrors Matnokh's separate namespace.
+/*
+|--------------------------------------------------------------------------
+| Company admin/staff dashboard
+|--------------------------------------------------------------------------
+*/
 Route::prefix('admin')->group(function () {
     Route::post('login', [AdminAuthController::class, 'login']);
 
-    Route::middleware(['auth:sanctum', 'staff', 'clinic'])->group(function () {
+    Route::middleware(['auth:sanctum', 'staff', 'company'])->group(function () {
         Route::get('me', [AdminAuthController::class, 'me']);
         Route::get('badges', [AdminAuthController::class, 'badges']);
         Route::post('logout', [AdminAuthController::class, 'logout']);
 
-        // Patients — perm:patients (except the inventory-suggestions read, gated separately)
-        Route::middleware('perm:patients')->group(function () {
-            Route::get('owners', [AdminPetController::class, 'owners']);
-            Route::get('pets', [AdminPetController::class, 'index']);
-            Route::post('pets', [AdminPetController::class, 'store']);
-            Route::get('pets/{pet}', [AdminPetController::class, 'show']);
-            Route::patch('pets/{pet}', [AdminPetController::class, 'update']);
-            Route::patch('pets/{pet}/status', [AdminPetController::class, 'updateStatus']);
-            Route::post('pets/{pet}/records', [AdminPetController::class, 'storeRecord']);
-            Route::patch('pets/{pet}/records/{record}', [AdminPetController::class, 'updateRecord']);
-            Route::delete('pets/{pet}/records/{record}', [AdminPetController::class, 'destroyRecord']);
+        Route::get('dashboard', [AdminDashboardController::class, 'index']);
+
+        // Cars
+        Route::middleware('perm:cars')->group(function () {
+            Route::get('cars', [CarController::class, 'index']);
+            Route::post('cars', [CarController::class, 'store']);
+            Route::get('cars/{car}', [CarController::class, 'show']);
+            Route::post('cars/{car}', [CarController::class, 'update']); // multipart (image)
+            Route::patch('cars/{car}', [CarController::class, 'update']);
+            Route::patch('cars/{car}/status', [CarController::class, 'updateStatus']);
+            Route::delete('cars/{car}', [CarController::class, 'destroy']);
         });
 
-        // Clients
-        Route::middleware('perm:clients')->group(function () {
-            Route::get('clients', [AdminClientController::class, 'index']);
-            Route::post('clients', [AdminClientController::class, 'store']);
-            Route::get('clients/{user}', [AdminClientController::class, 'show']);
-            Route::patch('clients/{user}', [AdminClientController::class, 'update']);
-            Route::delete('clients/{user}', [AdminClientController::class, 'destroy']);
-            Route::post('clients/{user}/payments', [AdminClientController::class, 'storePayment']);
-            Route::delete('clients/{user}/payments/{payment}', [AdminClientController::class, 'destroyPayment']);
+        // Categories
+        Route::middleware('perm:categories')->group(function () {
+            Route::get('categories', [CategoryController::class, 'index']);
+            Route::post('categories', [CategoryController::class, 'store']);
+            Route::patch('categories/{category}', [CategoryController::class, 'update']);
+            Route::delete('categories/{category}', [CategoryController::class, 'destroy']);
         });
 
-        // Appointments
-        Route::middleware('perm:appointments')->group(function () {
-            Route::get('appointments', [AdminAppointmentController::class, 'index']);
-            Route::post('appointments', [AdminAppointmentController::class, 'store']);
-            Route::patch('appointments/{appointment}', [AdminAppointmentController::class, 'update']);
+        // Customers
+        Route::middleware('perm:customers')->group(function () {
+            Route::get('customers', [CustomerController::class, 'index']);
+            Route::post('customers', [CustomerController::class, 'store']);
+            Route::get('customers/{customer}', [CustomerController::class, 'show']);
+            Route::patch('customers/{customer}', [CustomerController::class, 'update']);
+            Route::delete('customers/{customer}', [CustomerController::class, 'destroy']);
         });
 
-        // Staff management
+        // Bookings
+        Route::middleware('perm:bookings')->group(function () {
+            Route::get('bookings', [BookingController::class, 'index']);
+            Route::post('bookings', [BookingController::class, 'store']);
+            Route::get('bookings/availability', [BookingController::class, 'availability']);
+            Route::get('bookings/{booking}', [BookingController::class, 'show']);
+            Route::patch('bookings/{booking}', [BookingController::class, 'update']);
+            Route::patch('bookings/{booking}/status', [BookingController::class, 'updateStatus']);
+            Route::delete('bookings/{booking}', [BookingController::class, 'destroy']);
+        });
+
+        // Invoices + payments
+        Route::middleware('perm:invoices')->group(function () {
+            Route::get('invoices', [InvoiceController::class, 'index']);
+            Route::post('invoices', [InvoiceController::class, 'store']);
+            Route::get('invoices/from-booking/{booking}', [InvoiceController::class, 'fromBooking']);
+            Route::get('invoices/{invoice}', [InvoiceController::class, 'show']);
+            Route::patch('invoices/{invoice}', [InvoiceController::class, 'update']);
+            Route::post('invoices/{invoice}/void', [InvoiceController::class, 'void']);
+            Route::delete('invoices/{invoice}', [InvoiceController::class, 'destroy']);
+            Route::post('invoices/{invoice}/payments', [InvoiceController::class, 'addPayment']);
+            Route::delete('invoices/{invoice}/payments/{payment}', [InvoiceController::class, 'deletePayment']);
+            Route::get('payments', [PaymentController::class, 'index']);
+        });
+
+        // Notifications
+        Route::get('notifications', [NotificationController::class, 'index']);
+        Route::post('notifications/read-all', [NotificationController::class, 'markAllRead']);
+        Route::patch('notifications/{notification}/read', [NotificationController::class, 'markRead']);
+        Route::delete('notifications/{notification}', [NotificationController::class, 'destroy']);
+
+        // Staff
         Route::middleware('perm:staff')->group(function () {
-            Route::get('staff', [AdminStaffController::class, 'index']);
-            Route::post('staff', [AdminStaffController::class, 'store']);
-            Route::patch('staff/{user}', [AdminStaffController::class, 'update']);
-            Route::delete('staff/{user}', [AdminStaffController::class, 'destroy']);
-            Route::post('staff/{user}/photo', [AdminStaffController::class, 'uploadPhoto']);
-            Route::delete('staff/{user}/photo', [AdminStaffController::class, 'deletePhoto']);
-        });
-
-        // Inventory — reading is open to any staff (used for medication suggestions
-        // in the patients treatment modal); writes require the permission.
-        Route::get('inventory', [AdminInventoryController::class, 'index']);
-        Route::middleware('perm:inventory')->group(function () {
-            Route::post('inventory', [AdminInventoryController::class, 'store']);
-            Route::patch('inventory/{medicine}', [AdminInventoryController::class, 'update']);
-            Route::delete('inventory/{medicine}', [AdminInventoryController::class, 'destroy']);
-        });
-
-        // Messages (from clients)
-        Route::middleware('perm:messages')->group(function () {
-            Route::get('messages', [AdminMessageController::class, 'index']);
-            Route::patch('messages/{message}/read', [AdminMessageController::class, 'markRead']);
+            Route::get('staff', [StaffController::class, 'index']);
+            Route::post('staff', [StaffController::class, 'store']);
+            Route::patch('staff/{user}', [StaffController::class, 'update']);
+            Route::post('staff/{user}/photo', [StaffController::class, 'uploadPhoto']);
+            Route::delete('staff/{user}', [StaffController::class, 'destroy']);
         });
 
         // Settings
         Route::middleware('perm:settings')->group(function () {
-            Route::get('settings', [AdminSettingController::class, 'index']);
-            Route::patch('settings', [AdminSettingController::class, 'update']);
-            Route::post('settings/photo', [AdminSettingController::class, 'uploadPhoto']);
+            Route::get('settings', [SettingController::class, 'index']);
+            Route::patch('settings', [SettingController::class, 'update']);
+            Route::post('settings/logo', [SettingController::class, 'uploadLogo']);
         });
     });
 });
 
-// Platform-owner (super-admin) area — manages clinics above the tenant data.
+/*
+|--------------------------------------------------------------------------
+| Platform owner (super-admin)
+|--------------------------------------------------------------------------
+*/
 Route::prefix('super')->group(function () {
     Route::post('login', [SuperAuthController::class, 'login']);
 
@@ -140,11 +161,20 @@ Route::prefix('super')->group(function () {
         Route::get('me', [SuperAuthController::class, 'me']);
         Route::post('logout', [SuperAuthController::class, 'logout']);
 
-        Route::get('clinics', [ClinicController::class, 'index']);
-        Route::post('clinics', [ClinicController::class, 'store']);
-        Route::patch('clinics/{clinic}', [ClinicController::class, 'update']);
-        Route::post('clinics/{clinic}/approve', [ClinicController::class, 'approve']);
-        Route::post('clinics/{clinic}/suspend', [ClinicController::class, 'suspend']);
-        Route::post('clinics/{clinic}/activate', [ClinicController::class, 'activate']);
+        Route::get('dashboard', [SuperDashboardController::class, 'index']);
+
+        Route::get('companies', [CompanyController::class, 'index']);
+        Route::post('companies', [CompanyController::class, 'store']);
+        Route::get('companies/{company}', [CompanyController::class, 'show']);
+        Route::patch('companies/{company}', [CompanyController::class, 'update']);
+        Route::post('companies/{company}/approve', [CompanyController::class, 'approve']);
+        Route::post('companies/{company}/suspend', [CompanyController::class, 'suspend']);
+        Route::post('companies/{company}/activate', [CompanyController::class, 'activate']);
+        Route::delete('companies/{company}', [CompanyController::class, 'destroy']);
+
+        Route::get('plans', [PlanController::class, 'index']);
+        Route::post('plans', [PlanController::class, 'store']);
+        Route::patch('plans/{plan}', [PlanController::class, 'update']);
+        Route::delete('plans/{plan}', [PlanController::class, 'destroy']);
     });
 });

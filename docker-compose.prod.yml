@@ -1,53 +1,67 @@
-# Production stack for the Contabo VPS. One public entry = vet-web on
-# 127.0.0.1:8007 (host nginx reverse-proxies a domain/port to it). The web
-# container serves the static frontend AND proxies /api,/uploads → vet-api.
-# DB and API are NOT published to the host (internal compose network only).
-# Explicit project name so this stack never clashes with other /opt/*/repo
-# projects (which would otherwise all default to the "repo" project name).
-name: vet-clinic
+# سيّار (recar) — production stack for recar.smartunita.com (/opt/recar)
+# Project name pinned so it never clashes with other /opt/<x> stacks.
+# Host nginx reverse-proxies recar.smartunita.com -> 127.0.0.1:8010 (recar-web).
+name: recar
+
 services:
-  vet-web:
+  recar-db:
+    image: mysql:8.0
+    container_name: recar-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: recar
+      MYSQL_USER: recar
+      MYSQL_PASSWORD: Recar_pr0d_7nK3x
+      MYSQL_ROOT_PASSWORD: Recar_root_9wT2v
+    volumes:
+      - recar-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pRecar_root_9wT2v"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    networks: [recar-net]
+
+  recar-api:
+    build: ./api
+    container_name: recar-api
+    restart: unless-stopped
+    working_dir: /app
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: https://recar.smartunita.com
+      DB_CONNECTION: mysql
+      DB_HOST: recar-db
+      DB_PORT: "3306"
+      DB_DATABASE: recar
+      DB_USERNAME: recar
+      DB_PASSWORD: Recar_pr0d_7nK3x
+      FILESYSTEM_DISK: public
+    volumes:
+      - ./api:/app
+      - recar-api-storage:/app/storage/app/public
+    depends_on:
+      recar-db:
+        condition: service_healthy
+    networks: [recar-net]
+
+  recar-web:
     image: nginx:alpine
-    container_name: vet-web
+    container_name: recar-web
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8007:80"
+      - "127.0.0.1:8010:80"
     volumes:
       - .:/usr/share/nginx/html:ro
       - ./.nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on: [vet-api]
-    networks: [vet-net]
-
-  vet-db:
-    image: mysql:8.0
-    container_name: vet-db
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: Vet_pr0d_7mK2pQ
-      MYSQL_DATABASE: vet
-    volumes:
-      - vet-db-data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pVet_pr0d_7mK2pQ"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-    networks: [vet-net]
-
-  vet-api:
-    build: ./api
-    container_name: vet-api
-    restart: unless-stopped
-    working_dir: /app
-    volumes:
-      - ./api:/app
     depends_on:
-      vet-db:
-        condition: service_healthy
-    networks: [vet-net]
+      - recar-api
+    networks: [recar-net]
 
 volumes:
-  vet-db-data:
+  recar-db-data:
+  recar-api-storage:
 
 networks:
-  vet-net:
+  recar-net:
