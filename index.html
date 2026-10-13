@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>سيّار | تأجير سيارات بسعر واضح وبدون طوابير</title>
+<meta name="description" content="سيّار — منصة تأجير سيارات: سعر نهائي شامل من أول شاشة، عقد إلكتروني، واستلام بدون تلامس.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0b1f3a;
+    --navy-2:#122b4e;
+    --amber:#f5a623;
+    --amber-dark:#d98c0a;
+    --bg:#f6f8fb;
+    --card:#ffffff;
+    --text:#1c2733;
+    --muted:#64748b;
+    --line:#e5eaf1;
+    --green:#16a34a;
+    --radius:16px;
+    --shadow:0 8px 28px rgba(11,31,58,.09);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+  img{max-width:100%}
+  a{text-decoration:none;color:inherit}
+  .container{max-width:1180px;margin:0 auto;padding:0 20px}
+
+  /* ===== Header ===== */
+  header{position:sticky;top:0;z-index:100;background:rgba(11,31,58,.92);backdrop-filter:blur(10px);color:#fff}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:900;font-size:1.45rem}
+  .logo .mark{width:38px;height:38px;border-radius:10px;background:var(--amber);display:grid;place-items:center;font-size:1.2rem}
+  .logo small{display:block;font-size:.62rem;font-weight:500;color:#aebdd4;letter-spacing:2px}
+  .nav-links{display:flex;gap:26px;font-weight:500;font-size:.95rem}
+  .nav-links a{color:#dbe4f0;transition:color .2s}
+  .nav-links a:hover{color:var(--amber)}
+  .nav-actions{display:flex;align-items:center;gap:12px}
+  .lang-btn{border:1px solid rgba(255,255,255,.3);color:#fff;background:transparent;border-radius:8px;padding:6px 12px;font-family:inherit;font-weight:700;cursor:pointer;font-size:.85rem}
+  .btn{display:inline-block;background:var(--amber);color:var(--navy);font-weight:800;padding:10px 22px;border-radius:10px;border:none;cursor:pointer;font-family:inherit;font-size:.95rem;transition:background .2s,transform .15s}
+  .btn:hover{background:var(--amber-dark);transform:translateY(-1px)}
+  .burger{display:none;background:none;border:none;color:#fff;font-size:1.6rem;cursor:pointer}
+
+  /* ===== Hero ===== */
+  .hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 55%,#1d4273 100%);color:#fff;padding:56px 0 110px;position:relative;overflow:hidden}
+  .hero::after{content:"";position:absolute;inset-inline-start:-120px;bottom:-160px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(245,166,35,.22),transparent 65%)}
+  .hero-inner{position:relative;z-index:1;text-align:center;max-width:760px;margin:0 auto}
+  .hero .badge{display:inline-block;background:rgba(245,166,35,.15);color:var(--amber);border:1px solid rgba(245,166,35,.4);border-radius:30px;padding:5px 16px;font-size:.85rem;font-weight:700;margin-bottom:18px}
+  .hero h1{font-size:2.6rem;font-weight:900;line-height:1.35;margin-bottom:14px}
+  .hero h1 em{font-style:normal;color:var(--amber)}
+  .hero p{color:#c3d0e2;font-size:1.1rem;max-width:560px;margin:0 auto}
+
+  /* ===== Search box ===== */
+  .search-wrap{position:relative;z-index:2;margin-top:-66px}
+  .search-box{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
+  .search-grid{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr auto;gap:14px;align-items:end}
+  .field label{display:block;font-size:.8rem;font-weight:700;color:var(--muted);margin-bottom:6px}
+  .field input,.field select{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;font-family:inherit;font-size:.95rem;background:#fbfcfe;color:var(--text);transition:border .2s}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--amber)}
+  .search-btn{padding:13px 30px;font-size:1rem}
+  .search-note{margin-top:12px;font-size:.82rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .search-note b{color:var(--green)}
+
+  /* ===== Trust strip ===== */
+  .trust{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:46px 0 10px}
+  .trust-item{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;display:flex;gap:12px;align-items:flex-start}
+  .trust-item .ic{font-size:1.5rem;background:#fef3e0;width:46px;height:46px;border-radius:12px;display:grid;place-items:center;flex-shrink:0}
+  .trust-item h3{font-size:.98rem;font-weight:800;margin-bottom:2px}
+  .trust-item p{font-size:.83rem;color:var(--muted);line-height:1.5}
+
+  /* ===== Sections ===== */
+  section{padding:54px 0}
+  .sec-head{text-align:center;max-width:620px;margin:0 auto 36px}
+  .sec-head .kicker{color:var(--amber-dark);font-weight:800;font-size:.9rem;letter-spacing:.5px}
+  .sec-head h2{font-size:1.9rem;font-weight:900;margin:6px 0 8px}
+  .sec-head p{color:var(--muted)}
+
+  /* Categories */
+  .cats{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:34px}
+  .cat{background:var(--card);border:1.5px solid var(--line);border-radius:30px;padding:9px 20px;font-weight:700;font-size:.92rem;cursor:pointer;transition:all .2s;font-family:inherit;color:var(--text)}
+  .cat:hover,.cat.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+  /* Cars grid */
+  .cars{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  .car-card{background:var(--card);border-radius:var(--radius);overflow:hidden;box-shadow:0 2px 10px rgba(11,31,58,.06);border:1px solid var(--line);transition:transform .2s,box-shadow .2s}
+  .car-card:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+  .car-media{height:160px;display:grid;place-items:center;position:relative;font-size:4.2rem}
+  .car-media.g1{background:linear-gradient(135deg,#e8eef7,#d4e0f0)}
+  .car-media.g2{background:linear-gradient(135deg,#fdf1dc,#f8e3bd)}
+  .car-media.g3{background:linear-gradient(135deg,#e3f3ea,#cfe9db)}
+  .car-media .tag{position:absolute;top:12px;inset-inline-start:12px;background:var(--navy);color:#fff;font-size:.72rem;font-weight:700;padding:4px 10px;border-radius:20px}
+  .car-media .tag.hot{background:var(--amber);color:var(--navy)}
+  .car-body{padding:18px}
+  .car-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+  .car-body h3{font-size:1.1rem;font-weight:800}
+  .car-body .year{color:var(--muted);font-size:.82rem}
+  .rating{font-size:.82rem;font-weight:700;color:var(--amber-dark);white-space:nowrap}
+  .specs{display:flex;gap:14px;color:var(--muted);font-size:.8rem;margin:10px 0 14px;flex-wrap:wrap}
+  .specs span{display:flex;align-items:center;gap:4px}
+  .car-foot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:14px}
+  .price b{font-size:1.35rem;font-weight:900;color:var(--navy)}
+  .price small{color:var(--muted);font-size:.78rem;display:block;margin-top:-4px}
+  .price .incl{color:var(--green);font-size:.72rem;font-weight:700}
+  .btn-sm{padding:9px 18px;font-size:.88rem;border-radius:9px}
+
+  /* How it works */
+  .how{background:var(--card);border-block:1px solid var(--line)}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+  .step{text-align:center;padding:10px 16px;position:relative}
+  .step .num{width:56px;height:56px;margin:0 auto 14px;border-radius:50%;background:var(--navy);color:var(--amber);display:grid;place-items:center;font-size:1.3rem;font-weight:900;box-shadow:0 6px 16px rgba(11,31,58,.25)}
+  .step h3{font-weight:800;margin-bottom:6px}
+  .step p{color:var(--muted);font-size:.92rem}
+
+  /* Monthly */
+  .monthly{background:linear-gradient(135deg,var(--navy),#1d4273);border-radius:22px;color:#fff;padding:44px 40px;display:grid;grid-template-columns:1.2fr 1fr;gap:30px;align-items:center}
+  .monthly h2{font-size:1.7rem;font-weight:900;margin-bottom:10px}
+  .monthly h2 em{font-style:normal;color:var(--amber)}
+  .monthly p{color:#c3d0e2;margin-bottom:18px}
+  .monthly ul{list-style:none;display:grid;gap:10px}
+  .monthly li{display:flex;gap:10px;align-items:center;font-weight:500}
+  .monthly li::before{content:"✓";color:var(--navy);background:var(--amber);width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:.8rem;font-weight:900;flex-shrink:0}
+  .monthly-car{font-size:7rem;text-align:center;filter:drop-shadow(0 16px 24px rgba(0,0,0,.35))}
+
+  /* Testimonials */
+  .quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  .quote{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px}
+  .quote .stars{color:var(--amber);letter-spacing:2px;margin-bottom:10px}
+  .quote p{font-size:.95rem;margin-bottom:16px}
+  .quote .who{display:flex;align-items:center;gap:12px}
+  .quote .avatar{width:42px;height:42px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:800}
+  .quote .who b{display:block;font-size:.92rem}
+  .quote .who small{color:var(--muted);font-size:.78rem}
+
+  /* FAQ */
+  .faq{max-width:760px;margin:0 auto}
+  details{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
+  summary{padding:16px 20px;font-weight:800;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+  summary::after{content:"+";font-size:1.4rem;color:var(--amber-dark);font-weight:400;transition:transform .2s}
+  details[open] summary::after{transform:rotate(45deg)}
+  details p{padding:0 20px 18px;color:var(--muted);font-size:.93rem}
+
+  /* CTA + Footer */
+  .cta{background:var(--amber);text-align:center;border-radius:22px;padding:40px 24px;color:var(--navy)}
+  .cta h2{font-size:1.8rem;font-weight:900;margin-bottom:8px}
+  .cta p{font-weight:500;margin-bottom:20px}
+  .cta .btn{background:var(--navy);color:#fff}
+  .cta .btn:hover{background:#0e2a50}
+  footer{background:var(--navy);color:#aebdd4;margin-top:60px;padding:48px 0 0}
+  .foot-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:30px;padding-bottom:36px}
+  .foot-grid h4{color:#fff;font-size:1rem;margin-bottom:14px;font-weight:800}
+  .foot-grid a{display:block;font-size:.88rem;margin-bottom:9px;transition:color .2s}
+  .foot-grid a:hover{color:var(--amber)}
+  .foot-grid p{font-size:.88rem;line-height:1.8}
+  .foot-bottom{border-top:1px solid rgba(255,255,255,.1);padding:18px 0;text-align:center;font-size:.82rem}
+
+  /* ===== Responsive ===== */
+  @media(max-width:960px){
+    .search-grid{grid-template-columns:1fr 1fr}
+    .search-btn{grid-column:1/-1}
+    .trust{grid-template-columns:repeat(2,1fr)}
+    .cars{grid-template-columns:repeat(2,1fr)}
+    .quotes{grid-template-columns:1fr}
+    .steps{grid-template-columns:1fr;gap:18px}
+    .monthly{grid-template-columns:1fr;padding:32px 24px}
+    .monthly-car{font-size:5rem}
+    .foot-grid{grid-template-columns:1fr 1fr}
+  }
+  @media(max-width:640px){
+    .nav-links{display:none;position:absolute;top:64px;inset-inline:0;background:var(--navy);flex-direction:column;gap:0;padding:10px 20px 18px;border-top:1px solid rgba(255,255,255,.1)}
+    .nav-links.open{display:flex}
+    .nav-links a{padding:12px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+    .burger{display:block}
+    .nav-actions .btn{display:none}
+    .hero{padding:40px 0 100px}
+    .hero h1{font-size:1.85rem}
+    .hero p{font-size:.98rem}
+    .search-grid{grid-template-columns:1fr}
+    .trust{grid-template-columns:1fr}
+    .cars{grid-template-columns:1fr}
+    .sec-head h2{font-size:1.5rem}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container nav">
+    <a href="#" class="logo">
+      <span class="mark">🚗</span>
+      <span>سيّار<small>SAYYAR</small></span>
+    </a>
+    <nav class="nav-links" id="navLinks">
+      <a href="#cars">السيارات</a>
+      <a href="#how">كيف نعمل</a>
+      <a href="#monthly">الاشتراك الشهري</a>
+      <a href="#faq">الأسئلة الشائعة</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="lang-btn" title="English">EN</button>
+      <a href="#" class="btn btn-sm">تسجيل الدخول</a>
+      <button class="burger" id="burger" aria-label="القائمة">☰</button>
+    </div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container hero-inner">
+    <span class="badge">⚡ استلام بدون تلامس — عقدك إلكتروني وجاهز قبل وصولك</span>
+    <h1>استأجر سيارتك في <em>٣ دقائق</em><br>بسعر نهائي بدون مفاجآت</h1>
+    <p>السعر اللي تشوفه هو اللي تدفعه — شامل التأمين والضريبة. ألغِ مجاناً حتى ٢٤ ساعة قبل الاستلام.</p>
+  </div>
+</section>
+
+<div class="container search-wrap">
+  <form class="search-box" onsubmit="event.preventDefault();alert('سيتم ربط البحث بصفحة النتائج في المرحلة القادمة')">
+    <div class="search-grid">
+      <div class="field">
+        <label>مدينة الاستلام</label>
+        <select>
+          <option>الرياض — وسط المدينة</option>
+          <option>الرياض — المطار</option>
+          <option>جدة</option>
+          <option>الدمام</option>
+          <option>مكة المكرمة</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>تاريخ الاستلام</label>
+        <input type="date" id="pickDate">
+      </div>
+      <div class="field">
+        <label>تاريخ الإرجاع</label>
+        <input type="date" id="dropDate">
+      </div>
+      <div class="field">
+        <label>فئة السيارة</label>
+        <select>
+          <option>كل الفئات</option>
+          <option>اقتصادية</option>
+          <option>سيدان</option>
+          <option>دفع رباعي SUV</option>
+          <option>فاخرة</option>
+        </select>
+      </div>
+      <button class="btn search-btn" type="submit">ابحث 🔍</button>
+    </div>
+    <div class="search-note"><b>✓</b> بدون رسوم مخفية · التأمين الأساسي والضريبة محسوبة ضمن السعر المعروض</div>
+  </form>
+
+  <div class="trust">
+    <div class="trust-item"><span class="ic">💰</span><div><h3>سعر نهائي واضح</h3><p>شامل التأمين والضريبة من أول شاشة، بلا إضافات مفاجئة عند الدفع.</p></div></div>
+    <div class="trust-item"><span class="ic">📱</span><div><h3>استلام بدون تلامس</h3><p>ارفع رخصتك ووقّع العقد إلكترونياً واستلم سيارتك بدون طوابير.</p></div></div>
+    <div class="trust-item"><span class="ic">🛡️</span><div><h3>توثيق حالة السيارة</h3><p>صور موثقة قبل وبعد الرحلة تحميك من أي نزاع على الأضرار.</p></div></div>
+    <div class="trust-item"><span class="ic">🕐</span><div><h3>دعم على مدار الساعة</h3><p>فريق دعم عربي متواجد ٢٤/٧ ومساعدة على الطريق عند أي طارئ.</p></div></div>
+  </div>
+</div>
+
+<section id="cars">
+  <div class="container">
+    <div class="sec-head">
+      <span class="kicker">أسطولنا</span>
+      <h2>سيارات مميزة هذا الأسبوع</h2>
+      <p>كل الأسعار المعروضة نهائية وتشمل التأمين الأساسي والضريبة</p>
+    </div>
+
+    <div class="cats">
+      <button class="cat active">الكل</button>
+      <button class="cat">اقتصادية</button>
+      <button class="cat">سيدان</button>
+      <button class="cat">SUV</button>
+      <button class="cat">فاخرة</button>
+      <button class="cat">عائلية</button>
+    </div>
+
+    <div class="cars">
+      <article class="car-card">
+        <div class="car-media g1"><span class="tag hot">الأكثر طلباً</span>🚙</div>
+        <div class="car-body">
+          <div class="car-top"><div><h3>هيونداي إلنترا</h3><span class="year">2025 · سيدان</span></div><span class="rating">★ 4.8 (212)</span></div>
+          <div class="specs"><span>⚙️ أوتوماتيك</span><span>⛽ بنزين</span><span>👥 5 مقاعد</span></div>
+          <div class="car-foot">
+            <div class="price"><b>119 ر.س</b><small>/ اليوم</small><span class="incl">شامل التأمين والضريبة</span></div>
+            <a href="#" class="btn btn-sm">احجز الآن</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="car-card">
+        <div class="car-media g2"><span class="tag">عرض خاص</span>🚐</div>
+        <div class="car-body">
+          <div class="car-top"><div><h3>تويوتا لاند كروزر</h3><span class="year">2024 · دفع رباعي</span></div><span class="rating">★ 4.9 (158)</span></div>
+          <div class="specs"><span>⚙️ أوتوماتيك</span><span>⛽ بنزين</span><span>👥 7 مقاعد</span></div>
+          <div class="car-foot">
+            <div class="price"><b>340 ر.س</b><small>/ اليوم</small><span class="incl">شامل التأمين والضريبة</span></div>
+            <a href="#" class="btn btn-sm">احجز الآن</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="car-card">
+        <div class="car-media g3"><span class="tag">جديد</span>🚗</div>
+        <div class="car-body">
+          <div class="car-top"><div><h3>كيا بيغاس</h3><span class="year">2025 · اقتصادية</span></div><span class="rating">★ 4.7 (304)</span></div>
+          <div class="specs"><span>⚙️ أوتوماتيك</span><span>⛽ بنزين</span><span>👥 5 مقاعد</span></div>
+          <div class="car-foot">
+            <div class="price"><b>89 ر.س</b><small>/ اليوم</small><span class="incl">شامل التأمين والضريبة</span></div>
+            <a href="#" class="btn btn-sm">احجز الآن</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="car-card">
+        <div class="car-media g2">🏎️</div>
+        <div class="car-body">
+          <div class="car-top"><div><h3>مرسيدس E200</h3><span class="year">2025 · فاخرة</span></div><span class="rating">★ 5.0 (76)</span></div>
+          <div class="specs"><span>⚙️ أوتوماتيك</span><span>⛽ بنزين</span><span>👥 5 مقاعد</span></div>
+          <div class="car-foot">
+            <div class="price"><b>520 ر.س</b><small>/ اليوم</small><span class="incl">شامل التأمين والضريبة</span></div>
+            <a href="#" class="btn btn-sm">احجز الآن</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="car-card">
+        <div class="car-media g3">🚘</div>
+        <div class="car-body">
+          <div class="car-top"><div><h3>تويوتا كامري</h3><span class="year">2025 · سيدان</span></div><span class="rating">★ 4.8 (421)</span></div>
+          <div class="specs"><span>⚙️ أوتوماتيك</span><span>⛽ هايبرد</span><span>👥 5 مقاعد</span></div>
+          <div class="car-foot">
+            <div class="price"><b>165 ر.س</b><small>/ اليوم</small><span class="incl">شامل التأمين والضريبة</span></div>
+            <a href="#" class="btn btn-sm">احجز الآن</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="car-card">
+        <div class="car-media g1">🚖</div>
+        <div class="car-body">
+          <div class="car-top"><div><h3>هيونداي ستاريا</h3><span class="year">2024 · عائلية</span></div><span class="rating">★ 4.6 (98)</span></div>
+          <div class="specs"><span>⚙️ أوتوماتيك</span><span>⛽ بنزين</span><span>👥 8 مقاعد</span></div>
+          <div class="car-foot">
+            <div class="price"><b>240 ر.س</b><small>/ اليوم</small><span class="incl">شامل التأمين والضريبة</span></div>
+            <a href="#" class="btn btn-sm">احجز الآن</a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="container">
+    <div class="sec-head">
+      <span class="kicker">ثلاث خطوات فقط</span>
+      <h2>كيف تستأجر مع سيّار؟</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="num">١</div>
+        <h3>اختر سيارتك</h3>
+        <p>حدد المدينة والتواريخ وقارن السيارات بسعر نهائي شامل — بدون حسابات إضافية.</p>
+      </div>
+      <div class="step">
+        <div class="num">٢</div>
+        <h3>وثّق ووقّع إلكترونياً</h3>
+        <p>ارفع رخصة القيادة والهوية مرة واحدة فقط، ووقّع العقد من جوالك قبل الوصول.</p>
+      </div>
+      <div class="step">
+        <div class="num">٣</div>
+        <h3>استلم وانطلق</h3>
+        <p>استلم السيارة من الفرع أو نوصلها لموقعك، مع توثيق مصوّر لحالتها قبل الانطلاق.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="monthly">
+  <div class="container">
+    <div class="monthly">
+      <div>
+        <h2>سيارة بنظام <em>الاشتراك الشهري</em></h2>
+        <p>بديل مرن عن تملّك السيارة: اشتراك واحد يشمل كل شيء، وتبدّل سيارتك أو تلغي متى شئت.</p>
+        <ul>
+          <li>يبدأ من ١٤٩٩ ر.س شهرياً</li>
+          <li>شامل الصيانة والتأمين والاستبدال</li>
+          <li>بدون دفعة أولى وبدون التزام طويل</li>
+          <li>إمكانية تبديل السيارة كل شهر</li>
+        </ul>
+        <br>
+        <a href="#" class="btn">اعرف المزيد عن الاشتراك</a>
+      </div>
+      <div class="monthly-car">🚙</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="sec-head">
+      <span class="kicker">آراء عملائنا</span>
+      <h2>ماذا يقولون عن سيّار؟</h2>
+    </div>
+    <div class="quotes">
+      <div class="quote">
+        <div class="stars">★★★★★</div>
+        <p>"أول مرة أستأجر سيارة بدون ما أقف بطابور. وقّعت العقد من جوالي واستلمت المفتاح في دقيقتين."</p>
+        <div class="who"><span class="avatar">م</span><div><b>محمد العتيبي</b><small>الرياض</small></div></div>
+      </div>
+      <div class="quote">
+        <div class="stars">★★★★★</div>
+        <p>"السعر اللي شفته بالموقع هو نفسه اللي دفعته بالضبط. هذا الشي ما لقيته عند غيرهم."</p>
+        <div class="who"><span class="avatar">س</span><div><b>سارة الأحمد</b><small>جدة</small></div></div>
+      </div>
+      <div class="quote">
+        <div class="stars">★★★★☆</div>
+        <p>"توثيق حالة السيارة بالصور قبل الاستلام ريّحني تماماً من هاجس تحميلي أضرار قديمة."</p>
+        <div class="who"><span class="avatar">ف</span><div><b>فهد القحطاني</b><small>الدمام</small></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="container">
+    <div class="sec-head">
+      <span class="kicker">عندك سؤال؟</span>
+      <h2>الأسئلة الشائعة</h2>
+    </div>
+    <div class="faq">
+      <details open>
+        <summary>هل السعر المعروض نهائي فعلاً؟</summary>
+        <p>نعم. السعر يشمل التأمين الأساسي وضريبة القيمة المضافة. الإضافات الاختيارية فقط (سائق، كرسي أطفال، تأمين شامل) تُحسب بشكل منفصل وبموافقتك قبل الدفع.</p>
+      </details>
+      <details>
+        <summary>ما هي المستندات المطلوبة للحجز؟</summary>
+        <p>رخصة قيادة سارية وبطاقة هوية أو إقامة. ترفعها مرة واحدة في حسابك وتُستخدم لكل الحجوزات القادمة.</p>
+      </details>
+      <details>
+        <summary>هل يمكنني إلغاء الحجز؟</summary>
+        <p>الإلغاء مجاني بالكامل حتى ٢٤ ساعة قبل موعد الاستلام، ويُسترد المبلغ لنفس وسيلة الدفع خلال ٣–٥ أيام عمل.</p>
+      </details>
+      <details>
+        <summary>هل توصلون السيارة إلى موقعي؟</summary>
+        <p>نعم، خدمة التوصيل والاستلام من موقعك متاحة في المدن الرئيسية برسوم رمزية تظهر لك بوضوح قبل تأكيد الحجز.</p>
+      </details>
+      <details>
+        <summary>ماذا يحدث عند وجود خدش أو ضرر؟</summary>
+        <p>حالة السيارة موثقة بالصور قبل استلامك وبعد إرجاعك، لذلك لا تتحمل إلا ما يثبت حدوثه خلال فترة إيجارك وفق تقرير واضح.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="cta">
+      <h2>جاهز تنطلق؟</h2>
+      <p>سجّل الآن واحصل على خصم ١٠٪ على أول حجز</p>
+      <a href="#" class="btn">أنشئ حسابك مجاناً</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div>
+        <h4>🚗 سيّار</h4>
+        <p>منصة تأجير سيارات بمعايير جديدة: سعر نهائي واضح، عقد إلكتروني، واستلام بدون تلامس في كل المدن الرئيسية.</p>
+      </div>
+      <div>
+        <h4>الخدمات</h4>
+        <a href="#">تأجير يومي</a>
+        <a href="#">الاشتراك الشهري</a>
+        <a href="#">سيارة مع سائق</a>
+        <a href="#">توصيل السيارة</a>
+      </div>
+      <div>
+        <h4>الشركة</h4>
+        <a href="#">من نحن</a>
+        <a href="#">الفروع</a>
+        <a href="#">انضم كشريك</a>
+        <a href="#">الوظائف</a>
+      </div>
+      <div>
+        <h4>الدعم</h4>
+        <a href="#">مركز المساعدة</a>
+        <a href="#">الشروط والأحكام</a>
+        <a href="#">سياسة الخصوصية</a>
+        <a href="#">تواصل معنا</a>
+      </div>
+    </div>
+    <div class="foot-bottom">© 2026 سيّار لتأجير السيارات — جميع الحقوق محفوظة</div>
+  </div>
+</footer>
+
+<script>
+  // قائمة الجوال
+  document.getElementById('burger').addEventListener('click',()=>{
+    document.getElementById('navLinks').classList.toggle('open');
+  });
+  // تفعيل أزرار الفئات شكلياً
+  document.querySelectorAll('.cat').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.cat').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+  }));
+  // تواريخ افتراضية: اليوم + ٣ أيام
+  const today=new Date(), ret=new Date(Date.now()+3*864e5);
+  const fmt=d=>d.toISOString().slice(0,10);
+  const pick=document.getElementById('pickDate'), drop=document.getElementById('dropDate');
+  pick.value=fmt(today); pick.min=fmt(today);
+  drop.value=fmt(ret); drop.min=fmt(today);
+</script>
+</body>
+</html>
