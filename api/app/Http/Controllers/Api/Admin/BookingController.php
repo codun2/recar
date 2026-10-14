@@ -163,18 +163,20 @@ class BookingController extends Controller
     }
 
     /**
-     * Confirm the physical handover of the car to the renter: who handed it
-     * over, when, the voucher/receipt, mileage and notes. Activates the booking
-     * and marks the car rented.
+     * Confirm the car was RETURNED (received back) by the showroom: who received
+     * it, when, odometer, voucher and notes. Completes the booking, frees the car,
+     * and (optionally) settles the remaining balance onto the invoice.
      */
     public function handover(Request $request, Booking $booking)
     {
         $data = $request->validate([
-            'handover_by'      => ['required', 'string', 'max:160'],
-            'handover_at'      => ['nullable', 'date'],
-            'handover_mileage' => ['nullable', 'integer', 'min:0'],
-            'handover_notes'   => ['nullable', 'string'],
-            'receipt'          => ['nullable', 'image', 'max:4096'],
+            'handover_by'       => ['required', 'string', 'max:160'],
+            'handover_at'       => ['nullable', 'date'],
+            'handover_mileage'  => ['nullable', 'integer', 'min:0'],
+            'handover_notes'    => ['nullable', 'string'],
+            'receipt'           => ['nullable', 'image', 'max:4096'],
+            'settle_remaining'  => ['nullable', 'boolean'],
+            'settle_method'     => ['nullable', 'in:cash,card,transfer,other'],
         ]);
 
         $booking->handover_by = $data['handover_by'];
@@ -185,25 +187,95 @@ class BookingController extends Controller
             $booking->handover_receipt = $this->storeImage($request->file('receipt'), 'handovers');
         }
 
-        if (! in_array($booking->status, ['completed', 'cancelled'], true)) {
-            $booking->status = 'active';
+        // Settle the remaining balance on the booking's invoice (create one if needed).
+        $settled = 0;
+        if (! empty($data['settle_remaining'])) {
+            $invoice = $this->ensureInvoice($booking);
+            $remaining = round((float) $invoice->total - (float) $invoice->paid_amount, 2);
+            if ($remaining > 0) {
+                $invoice->payments()->create([
+                    'company_id'  => $booking->company_id,
+                    'customer_id' => $booking->customer_id,
+                    'amount'      => $remaining,
+                    'method'      => $data['settle_method'] ?? 'cash',
+                    'reference'   => $booking->reference,
+                    'paid_at'     => Carbon::now(),
+                    'note'        => 'تخليص المتبقّي عند الاستلام',
+                ]);
+                $invoice->syncPaymentState();
+                $booking->deposit_paid = (float) $booking->deposit_paid + $remaining;
+                $settled = $remaining;
+            }
+        }
+
+        // Receiving the car back = rental finished → booking completed, car available.
+        if ($booking->status !== 'cancelled') {
+            $booking->status = 'completed';
         }
         $booking->save();
 
         if ($booking->car) {
-            $booking->car->update(['status' => 'rented']);
+            $booking->car->update(['status' => 'available']);
         }
 
         AppNotification::notify('booking', [
-            'title_ar' => 'تأكيد استلام سيارة',
-            'title_en' => 'Car handover confirmed',
-            'body_ar'  => "تم تسليم سيارة الحجز {$booking->reference} بواسطة {$booking->handover_by}",
-            'body_en'  => "Car handed over for {$booking->reference} by {$booking->handover_by}",
+            'title_ar' => 'استلام السيارة وإنهاء الحجز',
+            'title_en' => 'Car returned, booking completed',
+            'body_ar'  => "تم استلام سيارة الحجز {$booking->reference} بواسطة {$booking->handover_by}".($settled > 0 ? " · تخليص متبقّي {$settled}" : ''),
+            'body_en'  => "Car returned for {$booking->reference} by {$booking->handover_by}",
             'link'     => '/admin/bookings.html',
             'data'     => ['booking_id' => $booking->id],
         ]);
 
         return response()->json($booking->fresh()->load(['customer', 'car']));
+    }
+
+    /** Find the booking's invoice or build one from it (rental line + delivery). */
+    private function ensureInvoice(Booking $booking): \App\Models\Invoice
+    {
+        if ($booking->invoice) {
+            return $booking->invoice;
+        }
+        $company = $booking->company;
+        $prefix = $company->invoice_prefix ?? 'INV';
+        $seq = \App\Models\Invoice::count() + 1;
+        $number = $prefix.'-'.str_pad((string) $seq, 5, '0', STR_PAD_LEFT);
+
+        $invoice = \App\Models\Invoice::create([
+            'customer_id' => $booking->customer_id,
+            'booking_id'  => $booking->id,
+            'number'      => $number,
+            'issue_date'  => Carbon::today()->toDateString(),
+            'due_date'    => $booking->end_date?->toDateString(),
+            'subtotal'    => $booking->subtotal,
+            'discount'    => $booking->discount,
+            'tax'         => $booking->tax,
+            'total'       => $booking->total,
+            'paid_amount' => 0,
+            'status'      => 'unpaid',
+            'notes'       => 'إيجار '.$booking->reference,
+        ]);
+        $carName = $booking->car->name_ar ?? 'سيارة';
+        $invoice->items()->create([
+            'description' => "{$carName} — {$booking->days} يوم ({$booking->reference})",
+            'quantity'    => $booking->days,
+            'unit_price'  => $booking->daily_price,
+            'amount'      => round((float) $booking->daily_price * $booking->days, 2),
+        ]);
+        if ((float) $booking->delivery_fee > 0) {
+            $invoice->items()->create(['description' => 'رسوم توصيل', 'quantity' => 1, 'unit_price' => $booking->delivery_fee, 'amount' => $booking->delivery_fee]);
+        }
+        // Carry over any deposit already paid.
+        if ((float) $booking->deposit_paid > 0) {
+            $invoice->payments()->create([
+                'company_id' => $booking->company_id, 'customer_id' => $booking->customer_id,
+                'amount' => $booking->deposit_paid, 'method' => 'transfer', 'reference' => $booking->reference,
+                'paid_at' => Carbon::now(), 'note' => 'دفعة مقدّمة على الحجز',
+            ]);
+            $invoice->syncPaymentState();
+        }
+
+        return $invoice->fresh();
     }
 
     /** Check availability + price for a car over a date range (booking form). */

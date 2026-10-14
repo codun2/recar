@@ -158,7 +158,7 @@
       },
       render: function (cars) {
         const rows = cars.map(function (c) {
-          return '<tr><td><b class="rc-link" data-hist="' + c.id + '" title="' + t('rental_history') + '">' + esc(L(c, 'name')) + '</b><div class="muted" style="font-size:.78rem">' + esc(c.plate_number || '') + '</div></td>' +
+          return '<tr><td><div class="car-cell"><div class="car-thumb"' + (c.image ? ' style="background-image:url(' + esc(c.image) + ')"' : '') + '>' + (c.image ? '' : RC.icon('car', 18)) + '</div><div><b class="rc-link" data-hist="' + c.id + '" title="' + t('rental_history') + '">' + esc(L(c, 'name')) + '</b><div class="muted" style="font-size:.78rem">' + esc(c.plate_number || '') + '</div></div></div></td>' +
             '<td>' + esc(c.category ? L(c.category, 'name') : '—') + '</td>' +
             '<td>' + (c.offer_price && +c.offer_price > 0 ? '<span class="price-was">' + RC.money(c.daily_price) + '</span><b style="color:var(--red)">' + RC.money(c.offer_price) + '</b>' : RC.money(c.daily_price)) + (c.images_count ? ' <span class="muted" style="font-size:.72rem">· ' + c.images_count + ' 🖼</span>' : '') + '</td>' +
             '<td>' + RC.badge(c.status) + '</td>' +
@@ -226,20 +226,35 @@
 
     function handoverForm(booking) {
       const today = new Date().toISOString().slice(0, 10);
+      const remaining = Math.max(0, (booking.total || 0) - (booking.deposit_paid || 0));
       const body = '<form class="rc-form" id="hof">' +
         field(t('handover_by'), input('handover_by', (ME && ME.name) || '')) +
         '<div class="row">' + field(t('handover_date'), input('handover_at', today, 'date')) + field(t('mileage'), input('handover_mileage', '', 'number')) + '</div>' +
         field(t('voucher'), '<input class="rc-input" type="file" name="receipt" accept="image/*">') +
         field(t('notes'), textarea('handover_notes', '')) +
+        (remaining > 0.001
+          ? '<div class="rc-card" style="box-shadow:none;background:var(--surface-2);padding:12px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>' + t('remaining') + '</span><b style="color:var(--red)">' + RC.money(remaining) + '</b></div>' +
+            '<label class="chk"><input type="checkbox" name="settle" id="settlechk"> ' + t('settle_remaining') + '</label>' +
+            '<div id="settlebox" style="display:none;margin-top:8px">' + field(t('method'), select('settle_method', [{ v: 'cash', l: t('cash') }, { v: 'card', l: t('card') }, { v: 'transfer', l: t('transfer') }], 'cash')) + '</div></div>'
+          : '') +
         '</form>';
       const w = RC.modal(t('confirm_handover'), body, '<button class="rc-btn ghost" onclick="RC.closeModal()">' + t('cancel') + '</button><button class="rc-btn" id="hos">' + t('confirm_handover') + '</button>');
+      if ($('#settlechk', w)) $('#settlechk', w).onchange = function () { $('#settlebox', w).style.display = this.checked ? '' : 'none'; };
       $('#hos', w).onclick = async function () {
         const f = $('#hof', w); f.querySelectorAll('.err').forEach(function (e) { e.remove(); });
         const fd = new FormData(f);
         if (!fd.get('receipt') || !fd.get('receipt').name) fd.delete('receipt');
+        fd.set('settle_remaining', (f.settle && f.settle.checked) ? 1 : 0);
         Array.from(fd.keys()).forEach(function (k) { if (fd.get(k) === '') fd.delete(k); });
-        try { await RC.apiForm('POST', '/admin/bookings/' + booking.id + '/handover', fd); RC.closeModal(); RC.toast(t('saved')); PAGES['car-form'](); }
-        catch (e) { err(e, f); }
+        try {
+          await RC.apiForm('POST', '/admin/bookings/' + booking.id + '/handover', fd);
+          RC.closeModal(); RC.toast(t('saved'));
+          // car is now returned → available
+          const banner = document.querySelector('.handover-box');
+          if (banner) banner.outerHTML = '<div class="handover-box available"><div class="hb-row"><b>' + t('car_now_available') + '</b><span class="rc-badge s-available">' + t('available') + '</span></div></div>';
+          const sel = document.querySelector('#carf [name=status]');
+          if (sel) { sel.value = 'available'; sel.dispatchEvent(new Event('change', { bubbles: true })); }
+        } catch (e) { err(e, f); }
       };
     }
 
@@ -536,29 +551,48 @@
         return tableWrap(['name', 'role', 'status', 'actions'], rows);
       },
       bind: function (st, reload) {
-        const arr = st.data || st;
-        document.querySelectorAll('[data-edit]').forEach(function (b) { b.onclick = function () { staffForm(arr.find(function (u) { return u.id == b.dataset.edit; }), reload); }; });
+        document.querySelectorAll('[data-edit]').forEach(function (b) { b.onclick = function () { location.href = 'staff-form.html?id=' + b.dataset.edit; }; });
         document.querySelectorAll('[data-del]').forEach(function (b) { b.onclick = async function () { if (await RC.confirm(t('confirm_delete'))) { try { await RC.api('DELETE', '/admin/staff/' + b.dataset.del); RC.toast(t('deleted')); reload(); } catch (e) { err(e); } } }; });
       },
-      form: function (_, reload) { staffForm(null, reload); },
+      form: function () { location.href = 'staff-form.html'; },
     });
-    function staffForm(u, reload) {
-      u = u || {};
-      const perms = u.permissions || [];
-      const body = '<form class="rc-form" id="uf">' +
-        '<div class="row">' + field(t('name'), input('name', u.name)) + field(t('email'), input('email', u.email, 'email')) + '</div>' +
-        '<div class="row">' + field(t('phone'), input('phone', u.phone)) + field(t('role'), select('role', [{ v: 'staff', l: t('staff_role') }, { v: 'admin', l: t('admin') }], u.role || 'staff')) + '</div>' +
-        field(t('password'), input('password', '', 'password')) +
-        '<div><label style="font-weight:700;font-size:.82rem">' + t('permissions') + '</label><div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px">' + PERMS.map(function (p) { return '<label class="chk"><input type="checkbox" name="perm" value="' + p + '" ' + (perms.indexOf(p) >= 0 ? 'checked' : '') + '> ' + t(p) + '</label>'; }).join('') + '</div></div>' +
-        '</form>';
-      const w = RC.modal(u.id ? t('edit') : t('new_staff'), body, '<button class="rc-btn ghost" onclick="RC.closeModal()">' + t('cancel') + '</button><button class="rc-btn" id="us">' + t('save') + '</button>');
-      $('#us', w).onclick = async function () {
-        const f = $('#uf', w); f.querySelectorAll('.err').forEach(function (e) { e.remove(); });
-        const d = formData(f); d.permissions = Array.prototype.map.call(f.querySelectorAll('[name=perm]:checked'), function (c) { return c.value; }); delete d.perm;
-        if (!d.password) delete d.password;
-        try { await RC.api(u.id ? 'PATCH' : 'POST', u.id ? '/admin/staff/' + u.id : '/admin/staff', d); RC.closeModal(); RC.toast(t('saved')); reload(); } catch (e) { err(e, f); }
-      };
-    }
+  };
+
+  /* ---- Add / edit staff — full page with grouped sections ---- */
+  PAGES['staff-form'] = async function () {
+    const PERMS = ['cars', 'categories', 'bookings', 'customers', 'invoices', 'notifications', 'staff', 'settings'];
+    const id = new URLSearchParams(location.search).get('id');
+    let u = {};
+    if (id) { try { const list = await RC.api('GET', '/admin/staff'); u = (list.data || list).find(function (x) { return x.id == id; }) || {}; } catch (e) {} }
+    const h1 = document.querySelector('.rc-top h1'); if (h1) { h1.removeAttribute('data-i18n'); h1.textContent = id ? t('edit') : t('new_staff'); }
+    document.querySelectorAll('.rc-nav a').forEach(function (a) { a.classList.toggle('on', a.dataset.key === 'staff'); });
+    const perms = u.permissions || [];
+
+    view().innerHTML =
+      '<a class="pg-back" id="back">‹ ' + t('staff') + '</a>' +
+      '<form class="form-page" id="uf">' +
+      '<div class="rc-card sect"><h3>' + RC.icon('staff', 18) + ' ' + t('basic_info') + '</h3><div class="rc-form">' +
+      '<div class="row">' + field(t('name'), input('name', u.name)) + field(t('job_title'), input('title', u.title)) + '</div>' +
+      '<div class="row">' + field(t('phone'), input('phone', u.phone)) + field(t('role'), select('role', [{ v: 'staff', l: t('staff_role') }, { v: 'admin', l: t('admin') }], u.role || 'staff')) + '</div>' +
+      '<div class="row">' + field(t('status'), select('status', [{ v: 'active', l: t('active') }, { v: 'suspended', l: t('suspended') }], u.status || 'active')) + '<div></div></div>' +
+      '</div></div>' +
+      '<div class="rc-card sect"><h3>' + RC.icon('settings', 18) + ' ' + t('permissions') + '</h3>' +
+      '<p class="muted" style="font-size:.8rem;margin:-8px 0 10px">' + t('admin') + ' = كل الصلاحيات</p>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">' + PERMS.map(function (p) { return '<label class="chk"><input type="checkbox" name="perm" value="' + p + '" ' + (perms.indexOf(p) >= 0 ? 'checked' : '') + '> ' + t(p) + '</label>'; }).join('') + '</div></div>' +
+      '<div class="rc-card sect"><h3>' + RC.icon('bank', 18) + ' ' + t('account_info') + '</h3><div class="rc-form">' +
+      '<div class="row">' + field(t('email'), input('email', u.email, 'email')) + field(t('password') + (id ? ' (اترك فارغاً لعدم التغيير)' : ''), input('password', '', 'password')) + '</div>' +
+      '</div></div>' +
+      '<div style="display:flex;gap:10px"><button class="rc-btn navy" id="save" type="button">' + RC.icon('check', 16) + ' ' + t('save') + '</button><button class="rc-btn ghost" id="cancel" type="button">' + t('cancel') + '</button></div>' +
+      '</form>';
+    $('#back').onclick = function () { location.href = 'staff.html'; };
+    $('#cancel').onclick = function () { location.href = 'staff.html'; };
+    $('#save').onclick = async function () {
+      const f = $('#uf'); f.querySelectorAll('.err').forEach(function (e) { e.remove(); });
+      const d = formData(f);
+      d.permissions = Array.prototype.map.call(f.querySelectorAll('[name=perm]:checked'), function (c) { return c.value; }); delete d.perm;
+      if (!d.password) delete d.password;
+      try { await RC.api(id ? 'PATCH' : 'POST', id ? '/admin/staff/' + id : '/admin/staff', d); RC.toast(t('saved')); location.href = 'staff.html'; } catch (e) { err(e, f); }
+    };
   };
 
   /* ---- Settings ---- */

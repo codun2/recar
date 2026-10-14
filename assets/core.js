@@ -22,7 +22,7 @@
       auto: 'أوتوماتيك', manual: 'عادي', petrol: 'بنزين', diesel: 'ديزل', electric: 'كهرباء', hybrid: 'هايبرد',
       featured: 'مميّزة', image: 'الصورة', description: 'الوصف', customer: 'العميل', car: 'السيارة',
       start_date: 'من', end_date: 'إلى', days: 'الأيام', subtotal: 'المجموع', discount: 'الخصم',
-      tax: 'الضريبة', pending: 'قيد الانتظار', confirmed: 'مؤكّد', active: 'نشِط', completed: 'مكتمل',
+      tax: 'الضريبة', pending: 'قيد الانتظار', confirmed: 'مؤكّد', active: 'نشِط', completed: 'تم الانتهاء',
       cancelled: 'ملغي', unpaid: 'غير مدفوعة', partial: 'جزئي', paid: 'مدفوعة', void: 'ملغاة',
       national_id: 'الهوية', license: 'رخصة القيادة', city: 'المدينة', address: 'العنوان', notes: 'ملاحظات',
       invoice: 'فاتورة', number: 'الرقم', issue_date: 'تاريخ الإصدار', due_date: 'الاستحقاق',
@@ -52,7 +52,8 @@
       full_payment_required: 'التوصيل يتطلب سداد كامل المبلغ', confirm_booking: 'تأكيد الحجز', awaiting_confirmation: 'بانتظار التأكيد',
       create_invoice: 'إنشاء فاتورة', view_invoice: 'عرض الفاتورة', paid: 'مدفوع', inventory: 'المخزون', transfer_to: 'حوّل إلى',
       rental_history: 'سجلّ التأجير', times_rented: 'مرات التأجير', total_days: 'إجمالي الأيام', no_history: 'لم تُؤجَّر بعد', rented_by: 'المستأجر', period: 'الفترة',
-      confirm_handover: 'تأكيد استلام السيارة', handover: 'الاستلام', handover_by: 'اسم الموظف المسلِّم', handover_date: 'تاريخ الاستلام', mileage: 'قراءة العدّاد', voucher: 'الوصل', handover_done: 'تم تأكيد الاستلام', rented_now: 'هذه السيارة مؤجّرة حالياً',
+      confirm_handover: 'تأكيد استلام السيارة', handover: 'الاستلام', handover_by: 'اسم الموظف المستلِم', handover_date: 'تاريخ الاستلام', mileage: 'قراءة العدّاد', voucher: 'الوصل', handover_done: 'تم الاستلام', rented_now: 'هذه السيارة مؤجّرة حالياً',
+      car_now_available: 'السيارة أصبحت متاحة للتأجير', settle_remaining: 'تخليص المبلغ المتبقّي وإضافته للفاتورة', basic_info: 'البيانات الأساسية', account_info: 'بيانات الحساب', job_title: 'المسمّى الوظيفي',
     },
     en: {
       app: 'Sayyar', dashboard: 'Dashboard', cars: 'Cars', categories: 'Categories',
@@ -68,7 +69,7 @@
       auto: 'Automatic', manual: 'Manual', petrol: 'Petrol', diesel: 'Diesel', electric: 'Electric', hybrid: 'Hybrid',
       featured: 'Featured', image: 'Image', description: 'Description', customer: 'Customer', car: 'Car',
       start_date: 'From', end_date: 'To', days: 'Days', subtotal: 'Subtotal', discount: 'Discount',
-      tax: 'Tax', pending: 'Pending', confirmed: 'Confirmed', active: 'Active', completed: 'Completed',
+      tax: 'Tax', pending: 'Pending', confirmed: 'Confirmed', active: 'Active', completed: 'Finished',
       cancelled: 'Cancelled', unpaid: 'Unpaid', partial: 'Partial', paid: 'Paid', void: 'Void',
       national_id: 'National ID', license: 'License', city: 'City', address: 'Address', notes: 'Notes',
       invoice: 'Invoice', number: 'Number', issue_date: 'Issue date', due_date: 'Due date',
@@ -98,7 +99,8 @@
       full_payment_required: 'Delivery requires full payment', confirm_booking: 'Confirm booking', awaiting_confirmation: 'Awaiting confirmation',
       create_invoice: 'Create invoice', view_invoice: 'View invoice', paid: 'Paid', inventory: 'Inventory', transfer_to: 'Transfer to',
       rental_history: 'Rental history', times_rented: 'Times rented', total_days: 'Total days', no_history: 'Not rented yet', rented_by: 'Rented by', period: 'Period',
-      confirm_handover: 'Confirm car handover', handover: 'Handover', handover_by: 'Handed over by', handover_date: 'Handover date', mileage: 'Odometer', voucher: 'Voucher', handover_done: 'Handover confirmed', rented_now: 'This car is currently rented',
+      confirm_handover: 'Confirm car return', handover: 'Return', handover_by: 'Received by', handover_date: 'Return date', mileage: 'Odometer', voucher: 'Voucher', handover_done: 'Returned', rented_now: 'This car is currently rented',
+      car_now_available: 'The car is now available for rent', settle_remaining: 'Settle the remaining balance (add to invoice)', basic_info: 'Basic info', account_info: 'Account', job_title: 'Job title',
     },
   };
 
