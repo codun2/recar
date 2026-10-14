@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\Account\BookingController as AccountBookingController;
 use App\Http\Controllers\Api\Account\CarController as AccountCarController;
 use App\Http\Controllers\Api\Account\InvoiceController as AccountInvoiceController;
+use App\Http\Controllers\Api\Admin\AccountsController;
 use App\Http\Controllers\Api\Admin\BookingController;
 use App\Http\Controllers\Api\Admin\CarController;
 use App\Http\Controllers\Api\Admin\CategoryController;
@@ -30,6 +31,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('companies', [PublicController::class, 'companies']);
 Route::get('companies/{slug}', [PublicController::class, 'company']);
 Route::get('companies/{slug}/cars', [PublicController::class, 'cars']);
+Route::get('companies/{slug}/cars/{id}', [PublicController::class, 'carDetail']);
 
 /*
 |--------------------------------------------------------------------------
@@ -50,6 +52,7 @@ Route::prefix('customer')->group(function () {
         Route::get('bookings', [AccountBookingController::class, 'index']);
         Route::post('bookings', [AccountBookingController::class, 'store']);
         Route::get('bookings/{booking}', [AccountBookingController::class, 'show']);
+        Route::post('bookings/{booking}/pay', [AccountBookingController::class, 'pay']);
         Route::post('bookings/{booking}/cancel', [AccountBookingController::class, 'cancel']);
 
         Route::get('invoices', [AccountInvoiceController::class, 'index']);
@@ -71,6 +74,7 @@ Route::prefix('admin')->group(function () {
         Route::post('logout', [AdminAuthController::class, 'logout']);
 
         Route::get('dashboard', [AdminDashboardController::class, 'index']);
+        Route::get('accounts', [AccountsController::class, 'index']);
 
         // Cars
         Route::middleware('perm:cars')->group(function () {
@@ -81,6 +85,10 @@ Route::prefix('admin')->group(function () {
             Route::patch('cars/{car}', [CarController::class, 'update']);
             Route::patch('cars/{car}/status', [CarController::class, 'updateStatus']);
             Route::delete('cars/{car}', [CarController::class, 'destroy']);
+            // Gallery (up to 15 images per car)
+            Route::post('cars/{car}/images', [CarController::class, 'uploadImages']);
+            Route::post('cars/{car}/images/{image}/main', [CarController::class, 'setMainImage']);
+            Route::delete('cars/{car}/images/{image}', [CarController::class, 'destroyImage']);
         });
 
         // Categories
@@ -116,6 +124,7 @@ Route::prefix('admin')->group(function () {
             Route::get('invoices', [InvoiceController::class, 'index']);
             Route::post('invoices', [InvoiceController::class, 'store']);
             Route::get('invoices/from-booking/{booking}', [InvoiceController::class, 'fromBooking']);
+            Route::post('invoices/from-booking/{booking}', [InvoiceController::class, 'createFromBooking']);
             Route::get('invoices/{invoice}', [InvoiceController::class, 'show']);
             Route::patch('invoices/{invoice}', [InvoiceController::class, 'update']);
             Route::post('invoices/{invoice}/void', [InvoiceController::class, 'void']);

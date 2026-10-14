@@ -173,4 +173,54 @@ table.rc-table{width:100%;border-collapse:collapse;font-size:.9rem}
   .rc-main{margin-inline-start:0}
   .rc-burger{display:block}
   .rc-form .row{grid-template-columns:1fr}
+  .car-detail{grid-template-columns:1fr !important}
 }
+
+/* ===== V2 additions ===== */
+/* icons in nav + buttons */
+.rc-nav a .ic{display:inline-grid;place-items:center;width:22px;height:22px;font-size:0}
+.rc-nav a .ic svg{width:21px;height:21px}
+.rc-tile .ic svg{width:26px;height:26px}
+.car-card .thumb svg{width:40px;height:40px}
+.rc-ic{vertical-align:middle}
+.rc-btn .rc-ic{margin-inline-end:-2px}
+
+/* polished action icon buttons */
+.rc-actions{display:inline-flex;gap:6px}
+.rc-ic-btn{width:34px;height:34px;display:inline-grid;place-items:center;border:1px solid var(--line);background:#fff;border-radius:9px;color:var(--muted);padding:0;transition:all .15s}
+.rc-ic-btn svg{width:17px;height:17px}
+.rc-ic-btn:hover{color:var(--navy);border-color:var(--navy);background:#f3f6fb}
+.rc-ic-btn.danger:hover{color:var(--red);border-color:var(--red);background:#fdeaea}
+.rc-ic-btn.go:hover{color:var(--green);border-color:var(--green);background:#e7f6ed}
+
+/* offer badge + pricing */
+.offer-badge{position:absolute;inset-block-start:10px;inset-inline-start:10px;background:var(--red);color:#fff;font-weight:800;font-size:.72rem;padding:3px 9px;border-radius:20px;z-index:2}
+.price-was{color:var(--muted);text-decoration:line-through;font-size:.8rem;font-weight:600;margin-inline-end:6px}
+.car-card{position:relative}
+
+/* car gallery (admin form + detail) */
+.gal{display:flex;flex-wrap:wrap;gap:8px}
+.gal .cell{position:relative;width:76px;height:60px;border-radius:9px;overflow:hidden;border:1px solid var(--line);background:#eef2f8 center/cover no-repeat}
+.gal .cell.main{outline:2px solid var(--amber)}
+.gal .cell .x{position:absolute;inset-block-start:2px;inset-inline-end:2px;width:18px;height:18px;border:none;border-radius:50%;background:rgba(220,38,38,.92);color:#fff;font-size:.7rem;display:grid;place-items:center;cursor:pointer}
+.gal .cell .mk{position:absolute;inset-block-end:2px;inset-inline-start:2px;background:rgba(11,31,58,.75);color:#fff;border:none;border-radius:5px;font-size:.6rem;padding:1px 5px;cursor:pointer}
+
+/* car detail page */
+.car-detail{display:grid;grid-template-columns:1.1fr 1fr;gap:24px;align-items:start}
+.car-detail .hero-img{width:100%;height:320px;border-radius:16px;background:#eef2f8 center/cover no-repeat;display:grid;place-items:center;color:#aab6c6}
+.car-detail .thumbs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.car-detail .thumbs img{width:72px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer}
+.car-detail .thumbs img.on{outline:2px solid var(--amber)}
+.spec-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.spec{background:#f3f6fb;border-radius:10px;padding:10px 12px}
+.spec .k{font-size:.72rem;color:var(--muted);font-weight:600}
+.spec .v{font-weight:800}
+
+/* financial / accounts */
+.fin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.bank-box{background:#f3f6fb;border:1px dashed var(--line);border-radius:12px;padding:14px;line-height:2}
+.bank-box b{color:var(--navy)}
+.receipt-thumb{max-width:100%;border-radius:10px;border:1px solid var(--line)}
+
+/* detail hero on narrow */
+@media(max-width:600px){ .spec-grid{grid-template-columns:1fr} }

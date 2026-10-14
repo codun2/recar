@@ -104,7 +104,23 @@ class CustomerAuthController extends Controller
 
     public function me(Request $request)
     {
-        return response()->json(['user' => $this->payload($request->user())]);
+        $user = $request->user();
+        $company = $user->company;
+
+        return response()->json([
+            'user'    => $this->payload($user),
+            'company' => $company ? [
+                'id'           => $company->id,
+                'name'         => $company->name,
+                'slug'         => $company->slug,
+                'currency'     => $company->currency,
+                'phone'        => $company->phone,
+                'bank_name'    => $company->bank_name,
+                'account_name' => $company->account_name,
+                'iban'         => $company->iban,
+                'stc_pay'      => $company->stc_pay,
+            ] : null,
+        ]);
     }
 
     public function logout(Request $request)

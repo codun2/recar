@@ -29,3 +29,6 @@ Thumbs.db
 # host-side backups
 *.static.bak
 nginx-recar.vhost.static.bak
+
+# dev-only test stack
+/docker-compose.test.yml

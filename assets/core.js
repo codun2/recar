@@ -42,6 +42,15 @@
       my_bookings: 'حجوزاتي', my_invoices: 'فواتيري', browse_cars: 'تصفّح السيارات', book_now: 'احجز الآن',
       register: 'تسجيل', signup: 'إنشاء حساب', have_account: 'لديك حساب؟', no_account: 'ليس لديك حساب؟',
       per_day: '/يوم', rent: 'استئجار', back: 'رجوع', cancel_booking: 'إلغاء الحجز',
+      offer: 'عرض', offer_price: 'سعر العرض', offer_label: 'عنوان العرض', images: 'الصور', max_images: 'حتى 15 صورة',
+      gallery: 'المعرض', main_image: 'الصورة الرئيسية', details: 'التفاصيل', view_details: 'عرض التفاصيل',
+      accounts: 'المالية', financial: 'الوضع المالي', receivables: 'المستحقات', deposits_held: 'تأمينات محتجزة',
+      invoiced: 'إجمالي الفواتير', collected: 'المحصّل', by_method: 'حسب طريقة الدفع', outstanding: 'فواتير غير محصّلة',
+      delivery: 'توصيل', delivery_address: 'عنوان التوصيل', delivery_fee: 'رسوم التوصيل', request_delivery: 'طلب توصيل',
+      receipt: 'الإيصال', upload_receipt: 'رفع الإيصال', pay: 'دفع', pay_now: 'ادفع الآن', pay_deposit: 'دفع دفعة',
+      payment_details: 'بيانات الدفع', bank_name: 'اسم البنك', account_name: 'اسم الحساب', iban: 'الآيبان', stc_pay: 'STC Pay',
+      full_payment_required: 'التوصيل يتطلب سداد كامل المبلغ', confirm_booking: 'تأكيد الحجز', awaiting_confirmation: 'بانتظار التأكيد',
+      create_invoice: 'إنشاء فاتورة', view_invoice: 'عرض الفاتورة', paid: 'مدفوع', inventory: 'المخزون', transfer_to: 'حوّل إلى',
     },
     en: {
       app: 'Sayyar', dashboard: 'Dashboard', cars: 'Cars', categories: 'Categories',
@@ -77,6 +86,15 @@
       my_bookings: 'My bookings', my_invoices: 'My invoices', browse_cars: 'Browse cars', book_now: 'Book now',
       register: 'Register', signup: 'Create account', have_account: 'Have an account?', no_account: 'No account?',
       per_day: '/day', rent: 'Rent', back: 'Back', cancel_booking: 'Cancel booking',
+      offer: 'Offer', offer_price: 'Offer price', offer_label: 'Offer label', images: 'Images', max_images: 'up to 15 images',
+      gallery: 'Gallery', main_image: 'Main image', details: 'Details', view_details: 'View details',
+      accounts: 'Finance', financial: 'Financial status', receivables: 'Receivables', deposits_held: 'Deposits held',
+      invoiced: 'Total invoiced', collected: 'Collected', by_method: 'By method', outstanding: 'Outstanding invoices',
+      delivery: 'Delivery', delivery_address: 'Delivery address', delivery_fee: 'Delivery fee', request_delivery: 'Request delivery',
+      receipt: 'Receipt', upload_receipt: 'Upload receipt', pay: 'Pay', pay_now: 'Pay now', pay_deposit: 'Pay deposit',
+      payment_details: 'Payment details', bank_name: 'Bank name', account_name: 'Account name', iban: 'IBAN', stc_pay: 'STC Pay',
+      full_payment_required: 'Delivery requires full payment', confirm_booking: 'Confirm booking', awaiting_confirmation: 'Awaiting confirmation',
+      create_invoice: 'Create invoice', view_invoice: 'View invoice', paid: 'Paid', inventory: 'Inventory', transfer_to: 'Transfer to',
     },
   };
 
@@ -300,12 +318,50 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSelectEnhancer);
   else initSelectEnhancer();
 
+  /* ---------- SVG icon set (outline, currentColor) ---------- */
+  const ICONS = {
+    dashboard: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+    cars: '<path d="M5 13l1.5-4.5A2 2 0 0 1 8.4 7h7.2a2 2 0 0 1 1.9 1.5L19 13"/><path d="M4 13h16a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1"/><path d="M5 18H4a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1"/><circle cx="7.5" cy="17.5" r="1.6"/><circle cx="16.5" cy="17.5" r="1.6"/>',
+    categories: '<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0l-6.2-6.2a2 2 0 0 1-.6-1.4V5a2 2 0 0 1 2-2h5a2 2 0 0 1 1.4.6l8.4 8.4a1.4 1.4 0 0 1 0 2z"/><circle cx="7.5" cy="7.5" r="1.2"/>',
+    bookings: '<rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 2.5v4M16 2.5v4"/><path d="M8 13h3M8 16.5h6"/>',
+    customers: '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16 5.2a3 3 0 0 1 0 5.6"/><path d="M17.5 13.6A5.5 5.5 0 0 1 20.5 18.5"/>',
+    invoices: '<path d="M6 2.5h9l4 4V21a.8.8 0 0 1-1.2.7L16 20.5l-2 1.2-2-1.2-2 1.2-2-1.2-1.8 1.2A.8.8 0 0 1 5 21V3.5a1 1 0 0 1 1-1z"/><path d="M9 8h6M9 11.5h6M9 15h4"/>',
+    notifications: '<path d="M18 8a6 6 0 1 0-12 0c0 6-2.5 7-2.5 7h17S18 14 18 8z"/><path d="M10.3 20a2 2 0 0 0 3.4 0"/>',
+    staff: '<circle cx="12" cy="7.5" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/>',
+    settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.9 7.9 0 0 0 0-3l1.7-1.3-1.8-3.1-2 .8a7.6 7.6 0 0 0-2.6-1.5l-.3-2.1H8.6l-.3 2.1a7.6 7.6 0 0 0-2.6 1.5l-2-.8-1.8 3.1 1.7 1.3a7.9 7.9 0 0 0 0 3l-1.7 1.3 1.8 3.1 2-.8a7.6 7.6 0 0 0 2.6 1.5l.3 2.1h3.8l.3-2.1a7.6 7.6 0 0 0 2.6-1.5l2 .8 1.8-3.1z"/>',
+    accounts: '<path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1"/><rect x="3" y="7.5" width="18" height="12" rx="2"/><path d="M16 12.5h2"/><circle cx="16.5" cy="13.5" r="0.3"/>',
+    logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>',
+    edit: '<path d="M4 20h4L19 9a2 2 0 0 0-3-3L5 17z"/><path d="M14.5 6.5l3 3"/>',
+    trash: '<path d="M4 7h16"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/><path d="M10 11v6M14 11v6"/>',
+    eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.8"/><path d="M4 18l5-5 4 3 3-3 4 4"/>',
+    check: '<polyline points="20 6 9 17 4 12"/>',
+    refresh: '<path d="M21 12a9 9 0 1 1-2.6-6.4"/><polyline points="21 3 21 8 16 8"/>',
+    companies: '<rect x="4" y="3" width="10" height="18" rx="1.5"/><path d="M14 8h5a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1h-5"/><path d="M7.5 7h3M7.5 10.5h3M7.5 14h3"/>',
+    plans: '<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 9.5h19"/><path d="M6 14.5h4"/>',
+    calendar: '<rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/>',
+    receipt: '<path d="M5 2.5l1.5 1.2L8 2.5l1.5 1.2L11 2.5l1.5 1.2L14 2.5v18l-1.5-1.2L11 20.5l-1.5-1.2L8 20.5l-1.5-1.2L5 20.5z" transform="translate(2.5 0)"/><path d="M9 8h6M9 11.5h6"/>',
+    offer: '<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0l-6.2-6.2a2 2 0 0 1-.6-1.4V5a2 2 0 0 1 2-2h5a2 2 0 0 1 1.4.6l8.4 8.4a1.4 1.4 0 0 1 0 2z"/><circle cx="7.5" cy="7.5" r="1.2"/><path d="M9 15l6-6" stroke-width="1.6"/>',
+    delivery: '<rect x="1.5" y="6" width="12" height="9" rx="1.5"/><path d="M13.5 9h4l3 3v3h-7z"/><circle cx="6" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>',
+    bank: '<path d="M4 10h16"/><path d="M4 10l8-6 8 6"/><path d="M6 10v8M10 10v8M14 10v8M18 10v8"/><path d="M3 20h18"/>',
+    wallet: '<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18"/><circle cx="16.5" cy="14" r="1.3"/>',
+    car: '<path d="M5 13l1.5-4.5A2 2 0 0 1 8.4 7h7.2a2 2 0 0 1 1.9 1.5L19 13"/><path d="M4 13h16a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1"/><path d="M5 18H4a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1"/><circle cx="7.5" cy="17.5" r="1.6"/><circle cx="16.5" cy="17.5" r="1.6"/>',
+    star: '<polygon points="12 3 14.8 8.6 21 9.5 16.5 13.9 17.6 20 12 17.1 6.4 20 7.5 13.9 3 9.5 9.2 8.6"/>',
+    upload: '<path d="M12 15V4"/><polyline points="7 9 12 4 17 9"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>',
+    phone: '<path d="M6.5 3h3l1.5 5-2 1.5a12 12 0 0 0 5 5l1.5-2 5 1.5v3a2 2 0 0 1-2 2A17 17 0 0 1 4.5 5a2 2 0 0 1 2-2z"/>',
+  };
+  function icon(name, size) {
+    const s = size || 20;
+    return '<svg class="rc-ic" width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || '') + '</svg>';
+  }
+
   window.RC = {
     AREA: AREA, api: api, apiForm: apiForm, token: token, guard: guard,
     t: t, L: L, lang: function () { return LANG; }, applyLang: applyLang, initLang: initLang,
     esc: esc, money: money, date: date, setCurrency: setCurrency, toast: toast,
     modal: modal, closeModal: closeModal, confirm: confirmDialog, badge: badge,
-    enhanceSelects: enhanceSelects,
+    enhanceSelects: enhanceSelects, icon: icon,
     LOGIN_URL: LOGIN_URL,
   };
 })();

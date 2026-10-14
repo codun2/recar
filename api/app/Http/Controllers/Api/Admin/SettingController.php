@@ -36,6 +36,10 @@ class SettingController extends Controller
             'locale'         => ['nullable', 'in:ar,en'],
             'tax_rate'       => ['nullable', 'numeric', 'min:0', 'max:100'],
             'invoice_prefix' => ['nullable', 'string', 'max:12'],
+            'bank_name'      => ['nullable', 'string', 'max:120'],
+            'account_name'   => ['nullable', 'string', 'max:160'],
+            'iban'           => ['nullable', 'string', 'max:60'],
+            'stc_pay'        => ['nullable', 'string', 'max:40'],
             'settings'       => ['nullable', 'array'],
         ]);
 

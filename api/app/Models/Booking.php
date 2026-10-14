@@ -15,8 +15,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 #[Fillable([
     'company_id', 'customer_id', 'car_id', 'created_by', 'reference',
     'start_date', 'end_date', 'days', 'daily_price', 'subtotal',
-    'discount', 'tax', 'total', 'deposit', 'status',
-    'pickup_location', 'dropoff_location', 'notes',
+    'discount', 'tax', 'total', 'deposit', 'deposit_paid', 'status',
+    'pickup_location', 'dropoff_location', 'delivery', 'delivery_address',
+    'delivery_fee', 'receipt', 'notes',
 ])]
 class Booking extends Model
 {
@@ -25,15 +26,18 @@ class Booking extends Model
     protected function casts(): array
     {
         return [
-            'start_date'  => 'date',
-            'end_date'    => 'date',
-            'days'        => 'integer',
-            'daily_price' => 'decimal:2',
-            'subtotal'    => 'decimal:2',
-            'discount'    => 'decimal:2',
-            'tax'         => 'decimal:2',
-            'total'       => 'decimal:2',
-            'deposit'     => 'decimal:2',
+            'start_date'   => 'date',
+            'end_date'     => 'date',
+            'days'         => 'integer',
+            'daily_price'  => 'decimal:2',
+            'subtotal'     => 'decimal:2',
+            'discount'     => 'decimal:2',
+            'tax'          => 'decimal:2',
+            'total'        => 'decimal:2',
+            'deposit'      => 'decimal:2',
+            'deposit_paid' => 'decimal:2',
+            'delivery'     => 'boolean',
+            'delivery_fee' => 'decimal:2',
         ];
     }
 

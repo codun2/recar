@@ -106,6 +106,73 @@ class InvoiceController extends Controller
         ]);
     }
 
+    /**
+     * Rental-centric one-click invoice: build it straight from a booking
+     * (car rental line [+ delivery line], booking's tax/discount) and carry
+     * over any deposit already paid as a recorded payment.
+     */
+    public function createFromBooking(Booking $booking)
+    {
+        if ($booking->invoice) {
+            return response()->json($booking->invoice->load(['items', 'payments', 'customer', 'booking']));
+        }
+
+        $booking->load('car');
+
+        $invoice = DB::transaction(function () use ($booking) {
+            $company = $booking->company;
+            $invoice = Invoice::create([
+                'customer_id' => $booking->customer_id,
+                'booking_id'  => $booking->id,
+                'number'      => $this->nextNumber($company->invoice_prefix ?? 'INV'),
+                'issue_date'  => Carbon::today()->toDateString(),
+                'due_date'    => $booking->end_date?->toDateString(),
+                'subtotal'    => $booking->subtotal,
+                'discount'    => $booking->discount,
+                'tax'         => $booking->tax,
+                'total'       => $booking->total,
+                'paid_amount' => 0,
+                'status'      => 'unpaid',
+                'notes'       => 'إيجار '.$booking->reference,
+            ]);
+
+            $carName = $booking->car->name_ar ?? 'سيارة';
+            $invoice->items()->create([
+                'description' => "{$carName} — {$booking->days} يوم ({$booking->reference})",
+                'quantity'    => $booking->days,
+                'unit_price'  => $booking->daily_price,
+                'amount'      => round((float) $booking->daily_price * $booking->days, 2),
+            ]);
+
+            if ((float) $booking->delivery_fee > 0) {
+                $invoice->items()->create([
+                    'description' => 'رسوم توصيل',
+                    'quantity'    => 1,
+                    'unit_price'  => $booking->delivery_fee,
+                    'amount'      => $booking->delivery_fee,
+                ]);
+            }
+
+            // Carry over any deposit the customer already paid.
+            if ((float) $booking->deposit_paid > 0) {
+                $invoice->payments()->create([
+                    'company_id'  => $booking->company_id,
+                    'customer_id' => $booking->customer_id,
+                    'amount'      => $booking->deposit_paid,
+                    'method'      => 'transfer',
+                    'reference'   => $booking->reference,
+                    'paid_at'     => Carbon::now(),
+                    'note'        => 'دفعة مقدّمة على الحجز',
+                ]);
+                $invoice->syncPaymentState();
+            }
+
+            return $invoice;
+        });
+
+        return response()->json($invoice->load(['items', 'payments', 'customer', 'booking']), 201);
+    }
+
     public function update(Request $request, Invoice $invoice)
     {
         $data = $request->validate([

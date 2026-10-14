@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'name', 'slug', 'status', 'plan_id', 'trial_ends_at', 'subscription_ends_at',
     'phone', 'email', 'address', 'city', 'logo', 'currency', 'locale',
     'tax_rate', 'invoice_prefix',
+    'bank_name', 'account_name', 'iban', 'stc_pay',
 ])]
 class Company extends Model
 {

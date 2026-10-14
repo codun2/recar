@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>سيّار — تفاصيل السيارة</title>
+  <link rel="stylesheet" href="/assets/dash.css">
+  <style>
+    body{background:var(--bg)}
+    .pg-top{background:var(--navy);color:#fff;padding:14px 22px;display:flex;align-items:center;gap:10px}
+    .pg-top .mark{width:34px;height:34px;border-radius:9px;background:var(--amber);color:var(--navy);display:grid;place-items:center}
+    .pg-top b{font-size:1.25rem;font-weight:900}
+    .pg-wrap{max-width:960px;margin:24px auto;padding:0 18px}
+    .pg-back{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-weight:700;margin-bottom:14px}
+  </style>
+</head>
+<body>
+  <div class="pg-top"><span class="mark">🚗</span><b>سيّار</b></div>
+  <div class="pg-wrap">
+    <a class="pg-back" href="/">‹ <span data-i18n="back"></span></a>
+    <div id="detail"><p data-i18n="loading"></p></div>
+  </div>
+  <script>window.AREA = 'customer';</script>
+  <script src="/assets/core.js"></script>
+  <script>
+    RC.initLang();
+    (async function () {
+      const qp = new URLSearchParams(location.search);
+      const slug = qp.get('company'), id = qp.get('id');
+      const box = document.getElementById('detail');
+      if (!slug || !id) { box.innerHTML = '<div class="rc-empty">—</div>'; return; }
+      try {
+        const r = await RC.api('GET', '/companies/' + slug + '/cars/' + id);
+        const c = r.car, t = RC.t, esc = RC.esc, L = RC.L;
+        if (r.company && r.company.currency) RC.setCurrency(r.company.currency);
+        const off = c.offer_price && +c.offer_price > 0;
+        const dp = off ? +c.offer_price : +c.daily_price;
+        const imgs = (c.images || []).map(function (im) { return im.path; });
+        const gallery = (c.image ? [c.image] : []).concat(imgs.filter(function (p) { return p !== c.image; }));
+        const spec = function (k, v) { return '<div class="spec"><div class="k">' + k + '</div><div class="v">' + v + '</div></div>'; };
+        box.innerHTML = '<div class="car-detail"><div>' +
+          '<div class="hero-img" id="hero" ' + (gallery[0] ? 'style="background-image:url(' + esc(gallery[0]) + ')"' : '') + '>' + (gallery[0] ? '' : RC.icon('car', 44)) + '</div>' +
+          (gallery.length > 1 ? '<div class="thumbs" id="thumbs">' + gallery.map(function (g, i) { return '<img src="' + esc(g) + '" class="' + (i === 0 ? 'on' : '') + '" data-g="' + esc(g) + '">'; }).join('') + '</div>' : '') +
+          '</div><div>' +
+          '<h2 style="font-size:1.5rem">' + esc(L(c, 'name')) + '</h2>' +
+          '<div style="font-size:1.5rem;font-weight:900;color:var(--navy);margin:8px 0">' + (off ? '<span class="price-was">' + RC.money(c.daily_price) + '</span>' : '') + RC.money(dp) + '<small style="font-size:.7rem;color:var(--muted)">' + t('per_day') + '</small></div>' +
+          '<div class="spec-grid">' + spec(t('category'), esc(c.category ? L(c.category, 'name') : '—')) + spec(t('transmission'), t(c.transmission)) + spec(t('fuel'), t(c.fuel)) + spec(t('seats'), c.seats || 5) + spec(t('year'), c.year || '—') + spec(t('deposit'), RC.money(c.deposit)) + '</div>' +
+          (L(c, 'description') ? '<p style="color:var(--muted)">' + esc(L(c, 'description')) + '</p>' : '') +
+          '<a class="rc-btn" href="/account/login.html" style="width:100%;justify-content:center;margin-top:8px">' + t('book_now') + '</a>' +
+          '</div></div>';
+        const hero = document.getElementById('hero');
+        document.querySelectorAll('#thumbs img').forEach(function (im) { im.onclick = function () { hero.style.backgroundImage = 'url(' + im.dataset.g + ')'; hero.innerHTML = ''; document.querySelectorAll('#thumbs img').forEach(function (x) { x.classList.remove('on'); }); im.classList.add('on'); }; });
+      } catch (e) { box.innerHTML = '<div class="rc-empty">' + (e.message || '') + '</div>'; }
+    })();
+  </script>
+</body>
+</html>

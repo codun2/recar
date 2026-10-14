@@ -40,21 +40,32 @@ class BookingController extends Controller
             'end_date'         => ['required', 'date', 'after_or_equal:start_date'],
             'discount'         => ['nullable', 'numeric', 'min:0'],
             'deposit'          => ['nullable', 'numeric', 'min:0'],
+            'deposit_paid'     => ['nullable', 'numeric', 'min:0'],
             'status'           => ['nullable', 'in:pending,confirmed,active,completed,cancelled'],
             'pickup_location'  => ['nullable', 'string', 'max:160'],
             'dropoff_location' => ['nullable', 'string', 'max:160'],
+            'delivery'         => ['nullable', 'boolean'],
+            'delivery_address' => ['nullable', 'string', 'max:255'],
+            'delivery_fee'     => ['nullable', 'numeric', 'min:0'],
             'notes'            => ['nullable', 'string'],
         ]);
 
         $car = Car::findOrFail($data['car_id']);
         $status = $data['status'] ?? 'pending';
+        $deliveryFee = (float) ($data['delivery_fee'] ?? 0);
 
         if (in_array($status, ['confirmed', 'active'], true)
             && ! $car->isAvailableBetween($data['start_date'], $data['end_date'])) {
             throw ValidationException::withMessages(['car_id' => ['السيارة محجوزة في هذه الفترة.']]);
         }
 
-        $priced = $this->price($car, $data['start_date'], $data['end_date'], (float) ($data['discount'] ?? 0));
+        $priced = $this->price($car, $data['start_date'], $data['end_date'], (float) ($data['discount'] ?? 0), $deliveryFee);
+
+        // Delivery bookings may not be activated until fully paid.
+        if ($status === 'active' && ! empty($data['delivery'])
+            && (float) ($data['deposit_paid'] ?? 0) + 0.001 < $priced['total']) {
+            throw ValidationException::withMessages(['status' => ['لا يمكن تحريك السيارة للتوصيل قبل سداد كامل المبلغ.']]);
+        }
 
         $booking = Booking::create(array_merge($data, $priced, [
             'created_by' => $request->user()->id,
@@ -87,21 +98,26 @@ class BookingController extends Controller
             'end_date'         => ['sometimes', 'date', 'after_or_equal:start_date'],
             'discount'         => ['nullable', 'numeric', 'min:0'],
             'deposit'          => ['nullable', 'numeric', 'min:0'],
+            'deposit_paid'     => ['nullable', 'numeric', 'min:0'],
             'pickup_location'  => ['nullable', 'string', 'max:160'],
             'dropoff_location' => ['nullable', 'string', 'max:160'],
+            'delivery'         => ['nullable', 'boolean'],
+            'delivery_address' => ['nullable', 'string', 'max:255'],
+            'delivery_fee'     => ['nullable', 'numeric', 'min:0'],
             'notes'            => ['nullable', 'string'],
         ]);
 
         $start = $data['start_date'] ?? $booking->start_date->toDateString();
         $end = $data['end_date'] ?? $booking->end_date->toDateString();
         $discount = (float) ($data['discount'] ?? $booking->discount);
+        $deliveryFee = array_key_exists('delivery_fee', $data) ? (float) $data['delivery_fee'] : (float) $booking->delivery_fee;
 
         if ($booking->car && ! $booking->car->isAvailableBetween($start, $end, $booking->id)
             && in_array($booking->status, ['confirmed', 'active'], true)) {
             throw ValidationException::withMessages(['car_id' => ['السيارة محجوزة في هذه الفترة.']]);
         }
 
-        $priced = $this->price($booking->car, $start, $end, $discount);
+        $priced = $this->price($booking->car, $start, $end, $discount, $deliveryFee);
         $booking->update(array_merge($data, $priced));
 
         return response()->json($booking->load(['customer', 'car']));
@@ -119,6 +135,10 @@ class BookingController extends Controller
         if ($new === 'active' && $booking->car) {
             if (! $booking->car->isAvailableBetween($booking->start_date->toDateString(), $booking->end_date->toDateString(), $booking->id)) {
                 throw ValidationException::withMessages(['status' => ['السيارة محجوزة في هذه الفترة.']]);
+            }
+            // A delivery booking can't move until the whole amount is paid.
+            if ($booking->delivery && (float) $booking->deposit_paid + 0.001 < (float) $booking->total) {
+                throw ValidationException::withMessages(['status' => ['لا يمكن تحريك السيارة للتوصيل قبل سداد كامل المبلغ.']]);
             }
             $booking->car->update(['status' => 'rented']);
         }
@@ -139,41 +159,43 @@ class BookingController extends Controller
         return response()->json(['message' => 'تم حذف الحجز.']);
     }
 
-    /** Check availability for a car over a date range (for the booking form). */
+    /** Check availability + price for a car over a date range (booking form). */
     public function availability(Request $request)
     {
         $data = $request->validate([
-            'car_id'     => ['required', 'integer', 'exists:cars,id'],
-            'start_date' => ['required', 'date'],
-            'end_date'   => ['required', 'date', 'after_or_equal:start_date'],
-            'except'     => ['nullable', 'integer'],
+            'car_id'       => ['required', 'integer', 'exists:cars,id'],
+            'start_date'   => ['required', 'date'],
+            'end_date'     => ['required', 'date', 'after_or_equal:start_date'],
+            'except'       => ['nullable', 'integer'],
+            'delivery_fee' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $car = Car::findOrFail($data['car_id']);
         $available = $car->isAvailableBetween($data['start_date'], $data['end_date'], $data['except'] ?? null);
-        $priced = $this->price($car, $data['start_date'], $data['end_date'], 0);
+        $priced = $this->price($car, $data['start_date'], $data['end_date'], 0, (float) ($data['delivery_fee'] ?? 0));
 
         return response()->json(array_merge(['available' => $available], $priced));
     }
 
-    /** Compute days + totals from the car price and company tax rate. */
-    private function price(Car $car, string $start, string $end, float $discount): array
+    /** Compute days + totals from the car (offer) price, tax rate and delivery fee. */
+    private function price(Car $car, string $start, string $end, float $discount, float $deliveryFee = 0): array
     {
         $days = max(1, Carbon::parse($start)->diffInDays(Carbon::parse($end)));
-        $daily = (float) $car->daily_price;
+        $daily = $car->effectivePrice();
         $subtotal = $daily * $days;
-        $taxable = max(0, $subtotal - $discount);
+        $taxable = max(0, $subtotal - $discount) + $deliveryFee;
         $taxRate = (float) ($car->company->tax_rate ?? 0);
         $tax = round($taxable * $taxRate / 100, 2);
         $total = round($taxable + $tax, 2);
 
         return [
-            'days'        => $days,
-            'daily_price' => $daily,
-            'subtotal'    => round($subtotal, 2),
-            'discount'    => round($discount, 2),
-            'tax'         => $tax,
-            'total'       => $total,
+            'days'         => $days,
+            'daily_price'  => $daily,
+            'subtotal'     => round($subtotal, 2),
+            'discount'     => round($discount, 2),
+            'delivery_fee' => round($deliveryFee, 2),
+            'tax'          => $tax,
+            'total'        => $total,
         ];
     }
 }

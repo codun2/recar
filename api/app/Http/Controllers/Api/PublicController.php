@@ -57,4 +57,21 @@ class PublicController extends Controller
             'cars'       => $cars,
         ]);
     }
+
+    /** One car's public detail page (specs + gallery). */
+    public function carDetail(string $slug, int $id)
+    {
+        $company = Company::where('slug', $slug)->where('status', 'active')->firstOrFail();
+
+        $car = Car::withoutGlobalScope('company')
+            ->where('company_id', $company->id)
+            ->whereIn('status', ['available', 'rented'])
+            ->with(['category:id,name_ar,name_en', 'images'])
+            ->findOrFail($id);
+
+        return response()->json([
+            'company' => ['id' => $company->id, 'name' => $company->name, 'slug' => $company->slug, 'currency' => $company->currency, 'phone' => $company->phone],
+            'car'     => $car,
+        ]);
+    }
 }

@@ -29,6 +29,6 @@ class CarController extends Controller
 
     public function show(Car $car)
     {
-        return response()->json($car->load('category:id,name_ar,name_en'));
+        return response()->json($car->load(['category:id,name_ar,name_en', 'images']));
     }
 }
