@@ -167,11 +167,145 @@
   }
   function badge(status) { return '<span class="rc-badge s-' + status + '">' + t(status) + '</span>'; }
 
+  /* ---------- custom select (progressive enhancement over native <select>) ---------- */
+  const CHEV = '<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+  const CHECK = '<svg class="ck" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+
+  function buildSelect(select) {
+    if (!select || select._rcEnh || select.multiple) return;
+    select._rcEnh = true;
+    const wrap = document.createElement('div');
+    wrap.className = 'rc-ss';
+    if (select.style.maxWidth) wrap.style.maxWidth = select.style.maxWidth;
+    select.parentNode.insertBefore(wrap, select);
+    wrap.appendChild(select);
+    select.classList.add('rc-ss-native');
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'rc-ss-trigger';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.innerHTML = '<span class="lbl"></span>' + CHEV;
+    wrap.appendChild(trigger);
+
+    let menu = null, activeIdx = -1, cleanup = null;
+
+    function syncLabel() {
+      const o = select.options[select.selectedIndex] || null;
+      const lbl = trigger.querySelector('.lbl');
+      const txt = o ? (o.textContent || '').trim() : '';
+      lbl.textContent = txt || '—';
+      lbl.classList.toggle('ph', !o || o.value === '');
+    }
+    syncLabel();
+    select.addEventListener('change', syncLabel);
+
+    function choose(val) {
+      if (String(select.value) !== String(val)) {
+        select.value = val;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      syncLabel();
+    }
+
+    function position() {
+      const r = trigger.getBoundingClientRect();
+      menu.style.width = r.width + 'px';
+      menu.style.left = r.left + 'px';
+      const mh = menu.offsetHeight, below = window.innerHeight - r.bottom;
+      if (below < mh + 8 && r.top > below) menu.style.top = (r.top - mh - 4) + 'px';
+      else menu.style.top = (r.bottom + 4) + 'px';
+    }
+
+    function setActive(i) {
+      if (!menu) return;
+      const items = menu.children;
+      if (activeIdx >= 0 && items[activeIdx]) items[activeIdx].classList.remove('active');
+      activeIdx = i;
+      if (items[i]) { items[i].classList.add('active'); items[i].scrollIntoView({ block: 'nearest' }); }
+    }
+
+    function close() {
+      if (!menu) return;
+      wrap.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+      const m = menu; menu = null;
+      m.classList.remove('show');
+      if (cleanup) { cleanup(); cleanup = null; }
+      setTimeout(function () { m.remove(); }, 150);
+    }
+
+    function open() {
+      if (menu) { close(); return; }
+      menu = document.createElement('div');
+      menu.className = 'rc-ss-menu';
+      menu.setAttribute('role', 'listbox');
+      Array.prototype.forEach.call(select.options, function (opt, i) {
+        const o = document.createElement('div');
+        o.className = 'rc-ss-opt' + (i === select.selectedIndex ? ' sel' : '') + (opt.value === '' ? ' ph' : '');
+        o.setAttribute('role', 'option');
+        o.innerHTML = '<span class="tx">' + esc((opt.textContent || '').trim() || '—') + '</span>' + CHECK;
+        o.addEventListener('mouseenter', function () { setActive(i); });
+        o.addEventListener('click', function () { choose(opt.value); close(); });
+        menu.appendChild(o);
+      });
+      document.body.appendChild(menu);
+      wrap.classList.add('open');
+      trigger.setAttribute('aria-expanded', 'true');
+      position();
+      requestAnimationFrame(function () { menu.classList.add('show'); });
+      setActive(select.selectedIndex);
+
+      function onDown(e) { if (menu && !menu.contains(e.target) && !wrap.contains(e.target)) close(); }
+      function onScroll(e) { if (menu && !menu.contains(e.target)) close(); }
+      document.addEventListener('mousedown', onDown, true);
+      window.addEventListener('scroll', onScroll, true);
+      window.addEventListener('resize', close);
+      cleanup = function () {
+        document.removeEventListener('mousedown', onDown, true);
+        window.removeEventListener('scroll', onScroll, true);
+        window.removeEventListener('resize', close);
+      };
+    }
+
+    trigger.addEventListener('click', function (e) { e.preventDefault(); open(); });
+    trigger.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!menu) { open(); return; }
+        const n = select.options.length;
+        setActive(e.key === 'ArrowDown' ? Math.min(n - 1, activeIdx + 1) : Math.max(0, activeIdx - 1));
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (!menu) open(); else if (activeIdx >= 0) { choose(select.options[activeIdx].value); close(); }
+      } else if (e.key === 'Escape') { close(); }
+    });
+  }
+
+  function enhanceSelects(root) { (root || document).querySelectorAll('select.rc-select').forEach(buildSelect); }
+  function initSelectEnhancer() {
+    enhanceSelects(document);
+    const mo = new MutationObserver(function (muts) {
+      muts.forEach(function (m) {
+        Array.prototype.forEach.call(m.addedNodes || [], function (n) {
+          if (n.nodeType !== 1) return;
+          if (n.matches && n.matches('select.rc-select')) buildSelect(n);
+          if (n.querySelectorAll) n.querySelectorAll('select.rc-select').forEach(buildSelect);
+        });
+      });
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSelectEnhancer);
+  else initSelectEnhancer();
+
   window.RC = {
     AREA: AREA, api: api, apiForm: apiForm, token: token, guard: guard,
     t: t, L: L, lang: function () { return LANG; }, applyLang: applyLang, initLang: initLang,
     esc: esc, money: money, date: date, setCurrency: setCurrency, toast: toast,
     modal: modal, closeModal: closeModal, confirm: confirmDialog, badge: badge,
+    enhanceSelects: enhanceSelects,
     LOGIN_URL: LOGIN_URL,
   };
 })();

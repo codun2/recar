@@ -72,6 +72,26 @@ input,select,textarea{font-family:inherit}
 .rc-input:focus,.rc-select:focus{outline:none;border-color:var(--amber)}
 .rc-search{max-width:260px}
 
+/* ---- custom select (progressive enhancement over native <select>) ---- */
+.rc-ss{position:relative;width:100%;display:block}
+.rc-ss-native{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;opacity:0;pointer-events:none}
+.rc-ss-trigger{display:flex;align-items:center;gap:8px;width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:.9rem;line-height:1.3;background:#fff;color:var(--text);text-align:start;transition:border-color .15s,box-shadow .15s}
+.rc-ss-trigger:hover{border-color:#c4d0e3}
+.rc-ss.open .rc-ss-trigger,.rc-ss-trigger:focus-visible{outline:none;border-color:var(--amber);box-shadow:0 0 0 3px rgba(245,166,35,.18)}
+.rc-ss-trigger .lbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc-ss-trigger .lbl.ph{color:var(--muted)}
+.rc-ss-trigger .chev{flex:none;color:var(--muted);transition:transform .2s}
+.rc-ss.open .rc-ss-trigger .chev{transform:rotate(180deg)}
+.rc-ss-menu{position:fixed;z-index:400;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 38px rgba(11,31,58,.18);padding:6px;max-height:280px;overflow-y:auto;opacity:0;transform:translateY(-6px);transition:opacity .15s,transform .15s;-webkit-overflow-scrolling:touch}
+.rc-ss-menu.show{opacity:1;transform:none}
+.rc-ss-opt{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:8px;font-size:.9rem;color:var(--text);cursor:pointer}
+.rc-ss-opt .tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc-ss-opt .ck{flex:none;opacity:0;color:var(--amber-dark)}
+.rc-ss-opt:hover,.rc-ss-opt.active{background:#f3f6fb}
+.rc-ss-opt.sel{color:var(--amber-dark);font-weight:700}
+.rc-ss-opt.sel .ck{opacity:1}
+.rc-ss-opt.ph{color:var(--muted)}
+
 /* ---- table ---- */
 .rc-table-wrap{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:auto}
 table.rc-table{width:100%;border-collapse:collapse;font-size:.9rem}
