@@ -104,6 +104,29 @@
 
   let LANG = localStorage.getItem('recar_lang') || 'ar';
   function t(k) { return (DICT[LANG] && DICT[LANG][k]) || (DICT.ar[k]) || k; }
+
+  /* ---------- theme (light default; per-browser choice) ---------- */
+  let THEME = (function () { try { return localStorage.getItem('recar_theme') || 'light'; } catch (e) { return 'light'; } })();
+  // Apply immediately to avoid a flash of the wrong theme.
+  try { document.documentElement.setAttribute('data-theme', THEME); } catch (e) {}
+  function applyTheme(th) {
+    THEME = th; try { localStorage.setItem('recar_theme', th); } catch (e) {}
+    document.documentElement.setAttribute('data-theme', th);
+    document.querySelectorAll('.rc-theme-opt').forEach(function (o) { o.classList.toggle('on', o.dataset.theme === th); });
+  }
+  function initTheme() {
+    applyTheme(THEME);
+    // Inject a light/dark toggle into the topbar (once), next to the lang switch.
+    const lang = document.querySelector('.rc-top .rc-lang') || document.querySelector('.rc-auth .rc-lang');
+    if (lang && !document.querySelector('.rc-theme')) {
+      const box = document.createElement('div');
+      box.className = 'rc-theme';
+      box.innerHTML = '<button class="rc-theme-opt" data-theme="light" title="فاتح">' + icon('sun', 16) + '</button><button class="rc-theme-opt" data-theme="dark" title="غامق">' + icon('moon', 16) + '</button>';
+      lang.parentNode.insertBefore(box, lang);
+      box.querySelectorAll('.rc-theme-opt').forEach(function (o) { o.addEventListener('click', function () { applyTheme(o.dataset.theme); }); });
+    }
+    document.querySelectorAll('.rc-theme-opt').forEach(function (o) { o.classList.toggle('on', o.dataset.theme === THEME); });
+  }
   function applyLang(lang) {
     LANG = lang; localStorage.setItem('recar_lang', lang);
     const html = document.documentElement;
@@ -119,6 +142,7 @@
     document.querySelectorAll('.rc-lang-opt').forEach(function (o) {
       o.addEventListener('click', function () { applyLang(o.dataset.lang); });
     });
+    initTheme();
   }
 
   /* ---------- localized field ---------- */
@@ -356,6 +380,8 @@
     upload: '<path d="M12 15V4"/><polyline points="7 9 12 4 17 9"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>',
     phone: '<path d="M6.5 3h3l1.5 5-2 1.5a12 12 0 0 0 5 5l1.5-2 5 1.5v3a2 2 0 0 1-2 2A17 17 0 0 1 4.5 5a2 2 0 0 1 2-2z"/>',
     history: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
   };
   function icon(name, size) {
     const s = size || 20;
@@ -367,7 +393,7 @@
     t: t, L: L, lang: function () { return LANG; }, applyLang: applyLang, initLang: initLang,
     esc: esc, money: money, date: date, setCurrency: setCurrency, toast: toast,
     modal: modal, closeModal: closeModal, confirm: confirmDialog, badge: badge,
-    enhanceSelects: enhanceSelects, icon: icon,
+    enhanceSelects: enhanceSelects, icon: icon, applyTheme: applyTheme, initTheme: initTheme,
     LOGIN_URL: LOGIN_URL,
   };
 })();
