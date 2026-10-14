@@ -117,6 +117,7 @@ Route::prefix('admin')->group(function () {
             Route::get('bookings/{booking}', [BookingController::class, 'show']);
             Route::patch('bookings/{booking}', [BookingController::class, 'update']);
             Route::patch('bookings/{booking}/status', [BookingController::class, 'updateStatus']);
+            Route::post('bookings/{booking}/deliver', [BookingController::class, 'deliver']);
             Route::post('bookings/{booking}/handover', [BookingController::class, 'handover']);
             Route::delete('bookings/{booking}', [BookingController::class, 'destroy']);
         });

@@ -187,16 +187,21 @@
     let pending = []; // add-mode staged files: {file, url, main}
 
     const ab = b.active_booking;
-    const handoverBanner = (id && ab) ? (
-      '<div class="handover-box">' +
-      '<div class="hb-row"><div><b>' + t('rented_now') + '</b><div class="muted" style="font-size:.84rem">' + esc(ab.reference || '') + ' · ' + esc(ab.customer ? ab.customer.name : '') + ' · ' + RC.date(ab.start_date) + ' → ' + RC.date(ab.end_date) + '</div></div>' +
-      (ab.handover_by
-        ? '<span class="rc-badge s-active">' + RC.icon('check', 14) + ' ' + t('handover_done') + '</span>'
-        : '<button class="rc-btn" id="hobtn">' + RC.icon('check', 16) + ' ' + t('confirm_handover') + '</button>') +
-      '</div>' +
-      (ab.handover_by ? '<div class="muted" style="font-size:.84rem;margin-top:8px">' + t('handover_by') + ': <b>' + esc(ab.handover_by) + '</b> · ' + t('handover_date') + ': ' + RC.date(ab.handover_at) + (ab.handover_mileage ? ' · ' + t('mileage') + ': ' + ab.handover_mileage : '') + (ab.handover_receipt ? ' · <a href="' + esc(ab.handover_receipt) + '" target="_blank">' + t('voucher') + '</a>' : '') + '</div>' : '') +
-      '</div>'
-    ) : '';
+    let handoverBanner = '';
+    if (id && ab) {
+      const isActive = ab.status === 'active';
+      const meta = esc(ab.reference || '') + ' · ' + esc(ab.customer ? ab.customer.name : '') + ' · ' + RC.date(ab.start_date) + ' → ' + RC.date(ab.end_date);
+      const action = isActive
+        ? '<button class="rc-btn" id="hobtn">' + RC.icon('check', 16) + ' ' + t('confirm_handover') + '</button>'
+        : '<button class="rc-btn" id="delbtn">' + RC.icon('check', 16) + ' ' + t('deliver_car') + '</button>';
+      const delivered = ab.delivered_by
+        ? '<div class="muted" style="font-size:.84rem;margin-top:8px">' + RC.icon('check', 13) + ' ' + t('delivery_info') + ': ' + t('delivered_by') + ' <b>' + esc(ab.delivered_by) + '</b> · ' + t('delivered_date') + ' ' + RC.date(ab.delivered_at) + (ab.delivered_mileage ? ' · ' + t('mileage') + ' ' + ab.delivered_mileage : '') + '</div>'
+        : '';
+      handoverBanner =
+        '<div class="handover-box">' +
+        '<div class="hb-row"><div><b>' + (isActive ? t('rented_now') : t('ready_to_deliver')) + '</b><div class="muted" style="font-size:.84rem">' + meta + '</div></div>' + action + '</div>' +
+        delivered + '</div>';
+    }
 
     view().innerHTML =
       '<a class="pg-back" id="back">‹ ' + t('cars') + '</a>' +
@@ -223,6 +228,24 @@
     $('#back').onclick = function () { location.href = 'cars.html'; };
     $('#cancel').onclick = function () { location.href = 'cars.html'; };
     if ($('#hobtn')) $('#hobtn').onclick = function () { handoverForm(ab); };
+    if ($('#delbtn')) $('#delbtn').onclick = function () { deliverForm(ab); };
+
+    function deliverForm(booking) {
+      const now = new Date(); const todayT = now.toISOString().slice(0, 16);
+      const body = '<form class="rc-form" id="dlf">' +
+        '<div class="muted" style="font-size:.85rem;margin-bottom:4px">' + esc(booking.reference || '') + ' · ' + esc(booking.customer ? booking.customer.name : '') + '</div>' +
+        field(t('delivered_by'), input('delivered_by', (ME && ME.name) || '')) +
+        '<div class="row">' + field(t('delivered_date'), input('delivered_at', todayT, 'datetime-local')) + field(t('mileage'), input('delivered_mileage', '', 'number')) + '</div>' +
+        field(t('notes'), textarea('delivered_notes', '')) +
+        '</form>';
+      const w = RC.modal(t('deliver_car'), body, '<button class="rc-btn ghost" onclick="RC.closeModal()">' + t('cancel') + '</button><button class="rc-btn" id="dls">' + t('deliver_car') + '</button>');
+      $('#dls', w).onclick = async function () {
+        const f = $('#dlf', w); f.querySelectorAll('.err').forEach(function (e) { e.remove(); });
+        const d = formData(f);
+        try { await RC.api('POST', '/admin/bookings/' + booking.id + '/deliver', d); RC.closeModal(); RC.toast(t('saved')); PAGES['car-form'](); }
+        catch (e) { err(e, f); }
+      };
+    }
 
     function handoverForm(booking) {
       const today = new Date().toISOString().slice(0, 10);

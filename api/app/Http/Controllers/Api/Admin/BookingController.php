@@ -163,6 +163,49 @@ class BookingController extends Controller
     }
 
     /**
+     * Hand the car OUT to the renter (rental starts): records who delivered it,
+     * when, odometer and notes. Activates the booking and marks the car rented.
+     */
+    public function deliver(Request $request, Booking $booking)
+    {
+        $data = $request->validate([
+            'delivered_by'      => ['required', 'string', 'max:160'],
+            'delivered_at'      => ['nullable', 'date'],
+            'delivered_mileage' => ['nullable', 'integer', 'min:0'],
+            'delivered_notes'   => ['nullable', 'string'],
+        ]);
+
+        if ($booking->car && ! $booking->car->isAvailableBetween($booking->start_date->toDateString(), $booking->end_date->toDateString(), $booking->id)) {
+            throw ValidationException::withMessages(['delivered_by' => ['السيارة محجوزة في هذه الفترة.']]);
+        }
+        if ($booking->delivery && (float) $booking->deposit_paid + 0.001 < (float) $booking->total) {
+            throw ValidationException::withMessages(['delivered_by' => ['لا يمكن تحريك السيارة للتوصيل قبل سداد كامل المبلغ.']]);
+        }
+
+        $booking->delivered_by = $data['delivered_by'];
+        $booking->delivered_at = $data['delivered_at'] ?? Carbon::now();
+        $booking->delivered_mileage = $data['delivered_mileage'] ?? null;
+        $booking->delivered_notes = $data['delivered_notes'] ?? null;
+        $booking->status = 'active';
+        $booking->save();
+
+        if ($booking->car) {
+            $booking->car->update(['status' => 'rented']);
+        }
+
+        AppNotification::notify('booking', [
+            'title_ar' => 'تسليم سيارة للعميل',
+            'title_en' => 'Car delivered to renter',
+            'body_ar'  => "تم تسليم سيارة الحجز {$booking->reference} بواسطة {$booking->delivered_by}",
+            'body_en'  => "Car delivered for {$booking->reference} by {$booking->delivered_by}",
+            'link'     => '/admin/bookings.html',
+            'data'     => ['booking_id' => $booking->id],
+        ]);
+
+        return response()->json($booking->fresh()->load(['customer', 'car']));
+    }
+
+    /**
      * Confirm the car was RETURNED (received back) by the showroom: who received
      * it, when, odometer, voucher and notes. Completes the booking, frees the car,
      * and (optionally) settles the remaining balance onto the invoice.

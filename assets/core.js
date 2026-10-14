@@ -54,6 +54,7 @@
       rental_history: 'سجلّ التأجير', times_rented: 'مرات التأجير', total_days: 'إجمالي الأيام', no_history: 'لم تُؤجَّر بعد', rented_by: 'المستأجر', period: 'الفترة',
       confirm_handover: 'تأكيد استلام السيارة', handover: 'الاستلام', handover_by: 'اسم الموظف المستلِم', handover_date: 'تاريخ الاستلام', mileage: 'قراءة العدّاد', voucher: 'الوصل', handover_done: 'تم الاستلام', rented_now: 'هذه السيارة مؤجّرة حالياً',
       car_now_available: 'السيارة أصبحت متاحة للتأجير', settle_remaining: 'تخليص المبلغ المتبقّي وإضافته للفاتورة', basic_info: 'البيانات الأساسية', account_info: 'بيانات الحساب', job_title: 'المسمّى الوظيفي',
+      deliver_car: 'تسليم السيارة للعميل', delivered_by: 'اسم الموظف المسلِّم', delivered_date: 'تاريخ ووقت التسليم', ready_to_deliver: 'السيارة محجوزة — جاهزة للتسليم', delivered_done: 'تم التسليم للعميل', delivery_info: 'بيانات التسليم', return_info: 'بيانات الاستلام',
     },
     en: {
       app: 'Sayyar', dashboard: 'Dashboard', cars: 'Cars', categories: 'Categories',
@@ -101,6 +102,7 @@
       rental_history: 'Rental history', times_rented: 'Times rented', total_days: 'Total days', no_history: 'Not rented yet', rented_by: 'Rented by', period: 'Period',
       confirm_handover: 'Confirm car return', handover: 'Return', handover_by: 'Received by', handover_date: 'Return date', mileage: 'Odometer', voucher: 'Voucher', handover_done: 'Returned', rented_now: 'This car is currently rented',
       car_now_available: 'The car is now available for rent', settle_remaining: 'Settle the remaining balance (add to invoice)', basic_info: 'Basic info', account_info: 'Account', job_title: 'Job title',
+      deliver_car: 'Deliver car to renter', delivered_by: 'Delivered by', delivered_date: 'Delivery date/time', ready_to_deliver: 'Reserved — ready to deliver', delivered_done: 'Delivered', delivery_info: 'Delivery details', return_info: 'Return details',
     },
   };
 

@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'pickup_location', 'dropoff_location', 'delivery', 'delivery_address',
     'delivery_fee', 'receipt', 'notes',
     'handover_by', 'handover_at', 'handover_receipt', 'handover_mileage', 'handover_notes',
+    'delivered_by', 'delivered_at', 'delivered_mileage', 'delivered_notes',
 ])]
 class Booking extends Model
 {
@@ -41,6 +42,8 @@ class Booking extends Model
             'delivery_fee'  => 'decimal:2',
             'handover_at'   => 'datetime',
             'handover_mileage' => 'integer',
+            'delivered_at'  => 'datetime',
+            'delivered_mileage' => 'integer',
         ];
     }
 
