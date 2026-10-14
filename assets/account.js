@@ -80,7 +80,7 @@
       '<div class="row">' + field(t('start_date'), input('start_date', '', 'date')) + field(t('end_date'), input('end_date', '', 'date')) + '</div>' +
       '<label class="chk"><input type="checkbox" name="delivery" id="delc"> ' + t('request_delivery') + '</label>' +
       '<div id="delbox" style="display:none">' + field(t('delivery_address'), input('delivery_address', '')) + '<p class="muted" style="font-size:.78rem;margin:0">' + t('full_payment_required') + '</p></div>' +
-      '<div id="q" style="font-weight:800;color:var(--navy);margin:4px 0"></div>' +
+      '<div id="q" style="font-weight:800;color:var(--amber);margin:4px 0"></div>' +
       '<input type="hidden" name="car_id" value="' + c.id + '">' +
       '<button type="button" class="rc-btn" id="rentbtn" style="width:100%;justify-content:center">' + t('rent') + '</button>' +
       '</form>' +
@@ -101,7 +101,7 @@
       '<label class="chk"><input type="checkbox" name="delivery" id="delc"> ' + t('request_delivery') + '</label>' +
       '<div id="delbox" style="display:none">' + field(t('delivery_address'), input('delivery_address', '')) + '<p class="muted" style="font-size:.78rem;margin:0">' + t('full_payment_required') + '</p></div>' +
       field(t('notes'), '<textarea class="rc-input" name="notes" rows="2"></textarea>') +
-      '<div id="q" style="font-weight:800;color:var(--navy)"></div>' +
+      '<div id="q" style="font-weight:800;color:var(--amber)"></div>' +
       '<input type="hidden" name="car_id" value="' + car.id + '"></form>';
     const w = RC.modal(t('book_now'), body, '<button class="rc-btn ghost" onclick="RC.closeModal()">' + t('cancel') + '</button><button class="rc-btn" id="bs">' + t('rent') + '</button>');
     const f = $('#bf', w);

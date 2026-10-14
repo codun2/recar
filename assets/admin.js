@@ -336,7 +336,7 @@
         '<div class="row">' + field(t('discount'), input('discount', 0, 'number')) + field(t('deposit_paid') || t('paid_amount'), input('deposit_paid', 0, 'number')) + '</div>' +
         '<label class="chk"><input type="checkbox" name="delivery" id="delchk"> ' + t('request_delivery') + '</label>' +
         '<div id="delbox" style="display:none">' + '<div class="row">' + field(t('delivery_address'), input('delivery_address', '')) + field(t('delivery_fee'), input('delivery_fee', 0, 'number')) + '</div></div>' +
-        '<div class="row">' + field(t('status'), select('status', ['pending', 'confirmed', 'active'].map(function (s) { return { v: s, l: t(s) }; }), 'confirmed')) + field(' ', '<div id="priceview" style="font-weight:800;color:var(--navy);padding-top:26px"></div>') + '</div>' +
+        '<div class="row">' + field(t('status'), select('status', ['pending', 'confirmed', 'active'].map(function (s) { return { v: s, l: t(s) }; }), 'confirmed')) + field(' ', '<div id="priceview" style="font-weight:800;color:var(--amber);padding-top:26px"></div>') + '</div>' +
         field(t('notes'), textarea('notes', '')) + '</form>';
       const w = RC.modal(t('new_booking'), body, '<button class="rc-btn ghost" onclick="RC.closeModal()">' + t('cancel') + '</button><button class="rc-btn" id="bs">' + t('save') + '</button>');
       const f = $('#bf', w);
