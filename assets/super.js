@@ -100,7 +100,7 @@
     const plans = await RC.api('GET', '/super/plans');
     $('#list').innerHTML = '<div class="rc-grid tiles">' + plans.map(function (p) {
       return '<div class="rc-card"><div style="display:flex;justify-content:space-between;align-items:start"><h3>' + esc(L(p, 'name')) + '</h3>' + (p.is_active ? RC.badge('active') : RC.badge('suspended')) + '</div>' +
-        '<div style="font-size:1.4rem;font-weight:900;color:var(--navy)">' + RC.money(p.price_monthly) + '<small style="font-size:.7rem;color:var(--muted)">/' + t('price_monthly') + '</small></div>' +
+        '<div style="font-size:1.4rem;font-weight:900;color:var(--amber)">' + RC.money(p.price_monthly) + '<small style="font-size:.7rem;color:var(--muted)">/' + t('price_monthly') + '</small></div>' +
         '<div class="muted" style="font-size:.85rem;margin:6px 0">' + t('max_cars') + ': ' + (p.max_cars == null ? t('unlimited') : p.max_cars) + ' · ' + t('max_staff') + ': ' + (p.max_staff == null ? t('unlimited') : p.max_staff) + '</div>' +
         '<div class="muted" style="font-size:.8rem">' + (p.companies_count || 0) + ' ' + t('companies') + '</div>' +
         '<div style="margin-top:10px;display:flex;gap:8px"><button class="rc-btn ghost sm" data-edit="' + p.id + '">' + t('edit') + '</button><button class="rc-ic-btn" data-del="' + p.id + '">'+RC.icon('trash',16)+'</button></div></div>';
