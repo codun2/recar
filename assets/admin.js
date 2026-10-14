@@ -167,53 +167,106 @@
         return tableWrap(['name', 'category', 'daily_price', 'status', 'actions'], rows);
       },
       bind: function (cars, reload) {
-        document.querySelectorAll('[data-edit]').forEach(function (b) { b.onclick = function () { PAGES._carForm(cars.find(function (c) { return c.id == b.dataset.edit; }), reload); }; });
+        document.querySelectorAll('[data-edit]').forEach(function (b) { b.onclick = function () { location.href = 'car-form.html?id=' + b.dataset.edit; }; });
         document.querySelectorAll('[data-del]').forEach(function (b) { b.onclick = async function () { if (await RC.confirm(t('confirm_delete'))) { await RC.api('DELETE', '/admin/cars/' + b.dataset.del); RC.toast(t('deleted')); reload(); } }; });
         document.querySelectorAll('[data-hist],[data-hist2]').forEach(function (b) { b.onclick = function () { PAGES._carHistory(b.dataset.hist || b.dataset.hist2); }; });
       },
-      form: function (_, reload) { PAGES._carForm(null, reload); },
+      form: function () { location.href = 'car-form.html'; },
     });
   };
-  PAGES._carForm = async function (car, reload) {
+  /* ---- Add / edit car — full page with live image gallery (up to 15) ---- */
+  const MAX_IMG = 15;
+  PAGES['car-form'] = async function () {
+    const id = new URLSearchParams(location.search).get('id');
     const cats = await RC.api('GET', '/admin/categories');
     const catOpts = [{ v: '', l: '—' }].concat(cats.map(function (c) { return { v: c.id, l: L(c, 'name') }; }));
-    let b = car || {};
-    if (car) { try { b = await RC.api('GET', '/admin/cars/' + car.id); } catch (e) {} }
-    const body = '<form class="rc-form" id="carf" enctype="multipart/form-data">' +
+    let b = {};
+    if (id) { b = await RC.api('GET', '/admin/cars/' + id); }
+    const h1 = document.querySelector('.rc-top h1'); if (h1) { h1.removeAttribute('data-i18n'); h1.textContent = id ? t('edit') : t('new_car'); }
+    document.querySelectorAll('.rc-nav a').forEach(function (a) { a.classList.toggle('on', a.dataset.key === 'cars'); });
+    let pending = []; // add-mode staged files: {file, url, main}
+
+    view().innerHTML =
+      '<a class="pg-back" id="back">‹ ' + t('cars') + '</a>' +
+      '<div class="car-form-page">' +
+      '<form class="cf-main rc-card rc-form" id="carf">' +
       '<div class="row">' + field(t('name') + ' (ع)', input('name_ar', b.name_ar)) + field(t('name') + ' (EN)', input('name_en', b.name_en)) + '</div>' +
       '<div class="row">' + field(t('category'), select('category_id', catOpts, b.category_id)) + field(t('plate'), input('plate_number', b.plate_number)) + '</div>' +
       '<div class="row">' + field(t('daily_price'), input('daily_price', b.daily_price, 'number')) + field(t('offer_price'), input('offer_price', b.offer_price, 'number')) + '</div>' +
       '<div class="row">' + field(t('offer_label'), input('offer_label', b.offer_label)) + field(t('deposit'), input('deposit', b.deposit, 'number')) + '</div>' +
       '<div class="row">' + field(t('transmission'), select('transmission', [{ v: 'auto', l: t('auto') }, { v: 'manual', l: t('manual') }], b.transmission)) + field(t('fuel'), select('fuel', [{ v: 'petrol', l: t('petrol') }, { v: 'diesel', l: t('diesel') }, { v: 'electric', l: t('electric') }, { v: 'hybrid', l: t('hybrid') }], b.fuel)) + '</div>' +
       '<div class="row">' + field(t('year'), input('year', b.year, 'number')) + field(t('seats'), input('seats', b.seats, 'number')) + '</div>' +
-      '<div class="row">' + field(t('status'), select('status', [{ v: 'available', l: t('available') }, { v: 'rented', l: t('rented') }, { v: 'maintenance', l: t('maintenance') }, { v: 'hidden', l: t('hidden') }], b.status || 'available')) + field(t('image'), '<input class="rc-input" type="file" name="image" accept="image/*">') + '</div>' +
-      '<label class="chk"><input type="checkbox" name="featured" ' + (b.featured ? 'checked' : '') + '> ' + t('featured') + '</label>' +
+      '<div class="row">' + field(t('status'), select('status', [{ v: 'available', l: t('available') }, { v: 'rented', l: t('rented') }, { v: 'maintenance', l: t('maintenance') }, { v: 'hidden', l: t('hidden') }], b.status || 'available')) + '<div class="rc-field"><label>' + t('featured') + '</label><label class="chk" style="padding-top:8px"><input type="checkbox" name="featured" ' + (b.featured ? 'checked' : '') + '> ' + t('featured') + '</label></div></div>' +
       field(t('description') + ' (ع)', textarea('description_ar', b.description_ar)) +
-      '<div class="rc-field"><label>' + t('images') + ' (' + t('max_images') + ')</label>' +
-      (car ? '<div class="gal" id="gal"></div>' : '') +
-      '<input class="rc-input" type="file" name="images[]" multiple accept="image/*" style="margin-top:8px"></div>' +
-      '</form>';
-    const w = RC.modal(car ? t('edit') : t('new_car'), body, '<button class="rc-btn ghost" onclick="RC.closeModal()">' + t('cancel') + '</button><button class="rc-btn" id="carsave">' + t('save') + '</button>');
+      field(t('description') + ' (EN)', textarea('description_en', b.description_en)) +
+      '</form>' +
+      '<div class="cf-side rc-card"><h3>' + t('images') + ' <span class="muted" id="galcount" style="font-weight:600;font-size:.8rem"></span></h3>' +
+      '<p class="muted" style="font-size:.78rem;margin:-6px 0 10px">' + t('max_images') + ' · ' + t('main_image') + ' ★</p>' +
+      '<div class="gal" id="gal"></div>' +
+      '<label class="cf-upload" id="uplab">' + RC.icon('upload', 16) + ' ' + t('add') + '<input type="file" id="imgin" multiple accept="image/*" hidden></label>' +
+      '</div></div>' +
+      '<div style="display:flex;gap:10px;margin-top:16px"><button class="rc-btn navy" id="save">' + RC.icon('check', 16) + ' ' + t('save') + '</button><button class="rc-btn ghost" id="cancel">' + t('cancel') + '</button></div>';
 
-    function drawGallery() {
-      const gal = $('#gal', w); if (!gal) return;
-      const imgs = b.images || [];
-      gal.innerHTML = imgs.length ? imgs.map(function (im) {
-        const isMain = b.image === im.path;
-        return '<div class="cell' + (isMain ? ' main' : '') + '" style="background-image:url(' + esc(im.path) + ')"><button type="button" class="x" data-rm="' + im.id + '">✕</button>' + (isMain ? '' : '<button type="button" class="mk" data-main="' + im.id + '">★</button>') + '</div>';
-      }).join('') : '<span class="muted" style="font-size:.8rem">—</span>';
-      gal.querySelectorAll('[data-rm]').forEach(function (x) { x.onclick = async function () { b = await RC.api('DELETE', '/admin/cars/' + car.id + '/images/' + x.dataset.rm); drawGallery(); }; });
-      gal.querySelectorAll('[data-main]').forEach(function (x) { x.onclick = async function () { b = await RC.api('POST', '/admin/cars/' + car.id + '/images/' + x.dataset.main + '/main'); drawGallery(); }; });
+    $('#back').onclick = function () { location.href = 'cars.html'; };
+    $('#cancel').onclick = function () { location.href = 'cars.html'; };
+
+    function count() { return id ? (b.images || []).length : pending.length; }
+    function drawGal() {
+      const gal = $('#gal');
+      let cells;
+      if (id) {
+        const imgs = b.images || [];
+        cells = imgs.map(function (im) {
+          const isMain = b.image === im.path;
+          return '<div class="cell' + (isMain ? ' main' : '') + '" style="background-image:url(' + esc(im.path) + ')"><button type="button" class="x" data-rm="' + im.id + '">✕</button>' + (isMain ? '<span class="mktag">★</span>' : '<button type="button" class="mk" data-main="' + im.id + '">★</button>') + '</div>';
+        }).join('');
+      } else {
+        cells = pending.map(function (p, i) {
+          return '<div class="cell' + (p.main ? ' main' : '') + '" style="background-image:url(' + p.url + ')"><button type="button" class="x" data-rmp="' + i + '">✕</button>' + (p.main ? '<span class="mktag">★</span>' : '<button type="button" class="mk" data-mainp="' + i + '">★</button>') + '</div>';
+        }).join('');
+      }
+      gal.innerHTML = cells || '<span class="muted" style="font-size:.82rem">—</span>';
+      $('#galcount').textContent = '(' + count() + ' / ' + MAX_IMG + ')';
+      // edit-mode server handlers
+      gal.querySelectorAll('[data-rm]').forEach(function (x) { x.onclick = async function () { b = await RC.api('DELETE', '/admin/cars/' + id + '/images/' + x.dataset.rm); drawGal(); }; });
+      gal.querySelectorAll('[data-main]').forEach(function (x) { x.onclick = async function () { b = await RC.api('POST', '/admin/cars/' + id + '/images/' + x.dataset.main + '/main'); drawGal(); }; });
+      // add-mode staged handlers
+      gal.querySelectorAll('[data-rmp]').forEach(function (x) { x.onclick = function () { URL.revokeObjectURL(pending[+x.dataset.rmp].url); pending.splice(+x.dataset.rmp, 1); drawGal(); }; });
+      gal.querySelectorAll('[data-mainp]').forEach(function (x) { x.onclick = function () { pending.forEach(function (p, i) { p.main = (i == x.dataset.mainp); }); drawGal(); }; });
     }
-    drawGallery();
+    drawGal();
 
-    $('#carsave', w).onclick = async function () {
-      const form = $('#carf', w); form.querySelectorAll('.err').forEach(function (e) { e.remove(); });
-      const fd = new FormData(form); fd.set('featured', form.featured.checked ? 1 : 0);
-      if (!fd.get('image') || !fd.get('image').name) fd.delete('image');
-      if (!form['images[]'].files.length) fd.delete('images[]');
-      try { await RC.apiForm('POST', car ? '/admin/cars/' + car.id : '/admin/cars', fd); RC.closeModal(); RC.toast(t('saved')); reload(); }
-      catch (e) { err(e, form); }
+    $('#imgin').onchange = async function () {
+      const files = Array.prototype.slice.call(this.files);
+      this.value = '';
+      if (id) {
+        // upload immediately so the merchant sees them right away
+        const room = MAX_IMG - count();
+        const take = files.slice(0, Math.max(0, room));
+        if (!take.length) { RC.toast(t('max_images'), 'err'); return; }
+        const fd = new FormData(); take.forEach(function (f) { fd.append('images[]', f); });
+        try { b = await RC.apiForm('POST', '/admin/cars/' + id + '/images', fd); drawGal(); } catch (e) { err(e); }
+      } else {
+        files.forEach(function (f) { if (pending.length < MAX_IMG) pending.push({ file: f, url: URL.createObjectURL(f), main: pending.length === 0 }); });
+        drawGal();
+      }
+    };
+
+    $('#save').onclick = async function () {
+      const form = $('#carf'); form.querySelectorAll('.err').forEach(function (e) { e.remove(); });
+      const fd = new FormData(form);
+      // drop empty fields so DB defaults / nullable apply (e.g. seats)
+      Array.from(fd.keys()).forEach(function (k) { if (fd.get(k) === '') fd.delete(k); });
+      fd.set('featured', form.featured.checked ? 1 : 0);
+      if (!id) {
+        // send staged images (main first so it becomes the cover)
+        const ordered = pending.slice().sort(function (a, c) { return (c.main ? 1 : 0) - (a.main ? 1 : 0); });
+        ordered.forEach(function (p) { fd.append('images[]', p.file); });
+      }
+      try {
+        await RC.apiForm('POST', id ? '/admin/cars/' + id : '/admin/cars', fd);
+        RC.toast(t('saved')); location.href = 'cars.html';
+      } catch (e) { err(e, form); }
     };
   };
 

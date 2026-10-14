@@ -261,3 +261,15 @@ table.rc-table{width:100%;border-collapse:collapse;font-size:.9rem}
 .tl-item.s-cancelled .tl-dot{background:#94a3b8}
 .tl-item.s-pending .tl-dot,.tl-item.s-confirmed .tl-dot{background:var(--amber)}
 .tl-body{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px 12px;line-height:1.7}
+
+/* ===== add/edit car full page ===== */
+.car-form-page{display:grid;grid-template-columns:1.6fr 1fr;gap:18px;align-items:start}
+.cf-main{display:grid;gap:14px}
+.cf-side{position:sticky;top:84px}
+.cf-side h3{font-size:1rem;margin-bottom:10px}
+.cf-side .gal{gap:10px}
+.cf-side .gal .cell{width:104px;height:78px}
+.cf-upload{display:inline-flex;align-items:center;gap:7px;border:2px dashed var(--line);border-radius:11px;padding:11px 18px;font-weight:800;color:var(--navy);cursor:pointer;margin-top:14px}
+.cf-upload:hover{border-color:var(--amber);background:#fff9ef}
+.gal .cell .mktag{position:absolute;inset-block-end:2px;inset-inline-start:2px;background:var(--amber);color:var(--navy);border-radius:5px;font-size:.62rem;padding:1px 6px;font-weight:800}
+@media(max-width:860px){ .car-form-page{grid-template-columns:1fr} .cf-side{position:static} }
