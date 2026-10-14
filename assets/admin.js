@@ -158,17 +158,18 @@
       },
       render: function (cars) {
         const rows = cars.map(function (c) {
-          return '<tr><td><b>' + esc(L(c, 'name')) + '</b><div class="muted" style="font-size:.78rem">' + esc(c.plate_number || '') + '</div></td>' +
+          return '<tr><td><b class="rc-link" data-hist="' + c.id + '" title="' + t('rental_history') + '">' + esc(L(c, 'name')) + '</b><div class="muted" style="font-size:.78rem">' + esc(c.plate_number || '') + '</div></td>' +
             '<td>' + esc(c.category ? L(c.category, 'name') : '—') + '</td>' +
             '<td>' + (c.offer_price && +c.offer_price > 0 ? '<span class="price-was">' + RC.money(c.daily_price) + '</span><b style="color:var(--red)">' + RC.money(c.offer_price) + '</b>' : RC.money(c.daily_price)) + (c.images_count ? ' <span class="muted" style="font-size:.72rem">· ' + c.images_count + ' 🖼</span>' : '') + '</td>' +
             '<td>' + RC.badge(c.status) + '</td>' +
-            '<td class="rc-actions"><button class="rc-ic-btn" data-edit="' + c.id + '">'+RC.icon('edit',16)+'</button> <button class="rc-ic-btn danger" data-del="' + c.id + '">'+RC.icon('trash',16)+'</button></td></tr>';
+            '<td class="rc-actions"><button class="rc-ic-btn" data-hist2="' + c.id + '" title="' + t('rental_history') + '">'+RC.icon('history',16)+'</button> <button class="rc-ic-btn" data-edit="' + c.id + '">'+RC.icon('edit',16)+'</button> <button class="rc-ic-btn danger" data-del="' + c.id + '">'+RC.icon('trash',16)+'</button></td></tr>';
         }).join('');
         return tableWrap(['name', 'category', 'daily_price', 'status', 'actions'], rows);
       },
       bind: function (cars, reload) {
         document.querySelectorAll('[data-edit]').forEach(function (b) { b.onclick = function () { PAGES._carForm(cars.find(function (c) { return c.id == b.dataset.edit; }), reload); }; });
         document.querySelectorAll('[data-del]').forEach(function (b) { b.onclick = async function () { if (await RC.confirm(t('confirm_delete'))) { await RC.api('DELETE', '/admin/cars/' + b.dataset.del); RC.toast(t('deleted')); reload(); } }; });
+        document.querySelectorAll('[data-hist],[data-hist2]').forEach(function (b) { b.onclick = function () { PAGES._carHistory(b.dataset.hist || b.dataset.hist2); }; });
       },
       form: function (_, reload) { PAGES._carForm(null, reload); },
     });
@@ -214,6 +215,28 @@
       try { await RC.apiForm('POST', car ? '/admin/cars/' + car.id : '/admin/cars', fd); RC.closeModal(); RC.toast(t('saved')); reload(); }
       catch (e) { err(e, form); }
     };
+  };
+
+  /* ---- Car rental history (who rented it, when) ---- */
+  PAGES._carHistory = async function (id) {
+    const w = RC.modal(t('rental_history'), '<p>' + t('loading') + '</p>');
+    const d = await RC.api('GET', '/admin/cars/' + id + '/history');
+    const s = d.stats;
+    const tile = function (ic, v, k) { return '<div class="rc-tile" style="padding:12px"><div class="ic navy" style="width:40px;height:40px;font-size:1rem">' + RC.icon(ic, 18) + '</div><div><div class="v" style="font-size:1.1rem">' + v + '</div><div class="k">' + k + '</div></div></div>'; };
+    const bs = d.bookings;
+    const body =
+      '<div style="font-weight:800;margin-bottom:4px">' + esc(L(d.car, 'name')) + (d.car.plate_number ? ' · ' + esc(d.car.plate_number) : '') + '</div>' +
+      '<div class="rc-grid" style="grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px">' +
+      tile('history', s.total_rentals, t('times_rented')) + tile('calendar', s.days, t('total_days')) +
+      tile('wallet', RC.money(s.revenue), t('revenue')) + tile('bookings', s.active, t('active')) +
+      '</div>' +
+      (bs.length ? '<div class="rc-timeline">' + bs.map(function (b) {
+        return '<div class="tl-item s-' + b.status + '"><div class="tl-dot"></div><div class="tl-body"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>' + esc(b.customer ? b.customer.name : '—') + '</b>' + RC.badge(b.status) + '</div>' +
+          '<div class="muted" style="font-size:.83rem">' + RC.icon('calendar', 13) + ' ' + RC.date(b.start_date) + ' → ' + RC.date(b.end_date) + ' (' + b.days + ' ' + t('days') + ')' + (b.delivery ? ' · ' + t('delivery') : '') + '</div>' +
+          '<div class="muted" style="font-size:.83rem">' + esc(b.reference || '') + (b.customer && b.customer.phone ? ' · ' + esc(b.customer.phone) : '') + ' · ' + t('total') + ': ' + RC.money(b.total) + '</div>' +
+          '</div></div>';
+      }).join('') + '</div>' : '<div class="rc-empty">' + t('no_history') + '</div>');
+    w.querySelector('.rc-modal-body').innerHTML = body;
   };
 
   /* ---- Categories ---- */

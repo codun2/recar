@@ -37,6 +37,31 @@ class CarController extends Controller
         return response()->json($car->load(['category:id,name_ar,name_en', 'images']));
     }
 
+    /** Rental history/timeline for one car: who rented it, when, and totals. */
+    public function history(Car $car)
+    {
+        $bookings = $car->bookings()
+            ->with('customer:id,name,phone')
+            ->orderByDesc('start_date')->orderByDesc('id')
+            ->get(['id', 'customer_id', 'reference', 'start_date', 'end_date', 'days', 'total', 'deposit_paid', 'delivery', 'status', 'created_at']);
+
+        $billable = $bookings->whereNotIn('status', ['cancelled']);
+
+        return response()->json([
+            'car' => [
+                'id' => $car->id, 'name_ar' => $car->name_ar, 'name_en' => $car->name_en,
+                'plate_number' => $car->plate_number, 'status' => $car->status,
+            ],
+            'stats' => [
+                'total_rentals' => $billable->count(),
+                'active'        => $bookings->where('status', 'active')->count(),
+                'revenue'       => round((float) $billable->sum('total'), 2),
+                'days'          => (int) $billable->sum('days'),
+            ],
+            'bookings' => $bookings->values(),
+        ]);
+    }
+
     public function store(Request $request)
     {
         $data = $this->validateData($request);

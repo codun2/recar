@@ -51,6 +51,7 @@
       payment_details: 'بيانات الدفع', bank_name: 'اسم البنك', account_name: 'اسم الحساب', iban: 'الآيبان', stc_pay: 'STC Pay',
       full_payment_required: 'التوصيل يتطلب سداد كامل المبلغ', confirm_booking: 'تأكيد الحجز', awaiting_confirmation: 'بانتظار التأكيد',
       create_invoice: 'إنشاء فاتورة', view_invoice: 'عرض الفاتورة', paid: 'مدفوع', inventory: 'المخزون', transfer_to: 'حوّل إلى',
+      rental_history: 'سجلّ التأجير', times_rented: 'مرات التأجير', total_days: 'إجمالي الأيام', no_history: 'لم تُؤجَّر بعد', rented_by: 'المستأجر', period: 'الفترة',
     },
     en: {
       app: 'Sayyar', dashboard: 'Dashboard', cars: 'Cars', categories: 'Categories',
@@ -95,6 +96,7 @@
       payment_details: 'Payment details', bank_name: 'Bank name', account_name: 'Account name', iban: 'IBAN', stc_pay: 'STC Pay',
       full_payment_required: 'Delivery requires full payment', confirm_booking: 'Confirm booking', awaiting_confirmation: 'Awaiting confirmation',
       create_invoice: 'Create invoice', view_invoice: 'View invoice', paid: 'Paid', inventory: 'Inventory', transfer_to: 'Transfer to',
+      rental_history: 'Rental history', times_rented: 'Times rented', total_days: 'Total days', no_history: 'Not rented yet', rented_by: 'Rented by', period: 'Period',
     },
   };
 
@@ -350,6 +352,7 @@
     star: '<polygon points="12 3 14.8 8.6 21 9.5 16.5 13.9 17.6 20 12 17.1 6.4 20 7.5 13.9 3 9.5 9.2 8.6"/>',
     upload: '<path d="M12 15V4"/><polyline points="7 9 12 4 17 9"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/>',
     phone: '<path d="M6.5 3h3l1.5 5-2 1.5a12 12 0 0 0 5 5l1.5-2 5 1.5v3a2 2 0 0 1-2 2A17 17 0 0 1 4.5 5a2 2 0 0 1 2-2z"/>',
+    history: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
   };
   function icon(name, size) {
     const s = size || 20;

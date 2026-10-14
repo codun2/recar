@@ -248,3 +248,16 @@ table.rc-table{width:100%;border-collapse:collapse;font-size:.9rem}
 .sr-book h3{font-size:1.05rem}
 @media(max-width:860px){ .showroom{grid-template-columns:1fr} .sr-gallery{position:static} .sr-main{height:260px} }
 @media(max-width:480px){ .sr-info .spec-grid{grid-template-columns:1fr} }
+
+/* ===== clickable car name + rental history timeline ===== */
+.rc-link{color:var(--navy);cursor:pointer;border-bottom:1px dashed transparent}
+.rc-link:hover{border-bottom-color:var(--navy)}
+.rc-timeline{position:relative;padding-inline-start:18px}
+.rc-timeline::before{content:"";position:absolute;inset-block:6px 10px;inset-inline-start:5px;width:2px;background:var(--line)}
+.tl-item{position:relative;padding-bottom:12px}
+.tl-dot{position:absolute;inset-inline-start:-16px;top:5px;width:11px;height:11px;border-radius:50%;background:var(--navy);border:2px solid #fff;box-shadow:0 0 0 2px var(--line)}
+.tl-item.s-active .tl-dot{background:var(--green)}
+.tl-item.s-completed .tl-dot{background:var(--blue)}
+.tl-item.s-cancelled .tl-dot{background:#94a3b8}
+.tl-item.s-pending .tl-dot,.tl-item.s-confirmed .tl-dot{background:var(--amber)}
+.tl-body{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px 12px;line-height:1.7}

@@ -81,6 +81,7 @@ Route::prefix('admin')->group(function () {
             Route::get('cars', [CarController::class, 'index']);
             Route::post('cars', [CarController::class, 'store']);
             Route::get('cars/{car}', [CarController::class, 'show']);
+            Route::get('cars/{car}/history', [CarController::class, 'history']);
             Route::post('cars/{car}', [CarController::class, 'update']); // multipart (image)
             Route::patch('cars/{car}', [CarController::class, 'update']);
             Route::patch('cars/{car}/status', [CarController::class, 'updateStatus']);
