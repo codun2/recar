@@ -184,6 +184,19 @@
     .cars{grid-template-columns:1fr}
     .sec-head h2{font-size:1.5rem}
   }
+  /* custom filter dropdowns (match the dashboard look) */
+  .ss{position:relative}
+  .ss-native{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+  .ss-trigger{display:flex;align-items:center;gap:8px;width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--text);font-family:inherit;font-size:.95rem;text-align:start;cursor:pointer;transition:border .2s}
+  .ss-trigger .lbl{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ss-trigger .chev{transition:transform .2s;color:var(--amber);flex:none}
+  .ss.open .ss-trigger{border-color:var(--amber)}
+  .ss.open .ss-trigger .chev{transform:rotate(180deg)}
+  .ss-menu{position:absolute;z-index:200;inset-inline:0;top:calc(100% + 6px);background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 44px rgba(0,0,0,.5);padding:6px;max-height:260px;overflow-y:auto;opacity:0;transform:translateY(-6px);transition:opacity .15s,transform .15s;pointer-events:none}
+  .ss.open .ss-menu{opacity:1;transform:none;pointer-events:auto}
+  .ss-opt{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:.92rem;color:var(--text)}
+  .ss-opt:hover,.ss-opt.active{background:var(--surface-2)}
+  .ss-opt.sel{color:var(--amber);font-weight:700}
 </style>
 </head>
 <body>
@@ -516,6 +529,27 @@
   const pick=document.getElementById('pickDate'), drop=document.getElementById('dropDate');
   pick.value=fmt(today); pick.min=fmt(today);
   drop.value=fmt(ret); drop.min=fmt(today);
+
+  // قوائم منسدلة مخصّصة لحقول الفلترة (مطابقة لشكل اللوحات)
+  (function(){
+    function build(sel){
+      if(sel._e) return; sel._e=1;
+      var wrap=document.createElement('div'); wrap.className='ss';
+      sel.parentNode.insertBefore(wrap,sel); wrap.appendChild(sel); sel.classList.add('ss-native');
+      var trig=document.createElement('button'); trig.type='button'; trig.className='ss-trigger';
+      trig.innerHTML='<span class="lbl"></span><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+      wrap.appendChild(trig);
+      var menu=document.createElement('div'); menu.className='ss-menu'; wrap.appendChild(menu);
+      function sync(){ var o=sel.options[sel.selectedIndex]; trig.querySelector('.lbl').textContent=o?o.textContent:''; }
+      function fill(){ menu.innerHTML=''; Array.prototype.forEach.call(sel.options,function(opt,i){ var d=document.createElement('div'); d.className='ss-opt'+(i===sel.selectedIndex?' sel':''); d.textContent=opt.textContent; d.addEventListener('click',function(){ sel.selectedIndex=i; sync(); close(); }); menu.appendChild(d); }); }
+      function open(){ fill(); wrap.classList.add('open'); document.addEventListener('mousedown',out,true); }
+      function close(){ wrap.classList.remove('open'); document.removeEventListener('mousedown',out,true); }
+      function out(e){ if(!wrap.contains(e.target)) close(); }
+      trig.addEventListener('click',function(){ wrap.classList.contains('open')?close():open(); });
+      sync();
+    }
+    document.querySelectorAll('.search-box select').forEach(build);
+  })();
 </script>
 </body>
 </html>
