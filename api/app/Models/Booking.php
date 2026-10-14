@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'discount', 'tax', 'total', 'deposit', 'deposit_paid', 'status',
     'pickup_location', 'dropoff_location', 'delivery', 'delivery_address',
     'delivery_fee', 'receipt', 'notes',
+    'handover_by', 'handover_at', 'handover_receipt', 'handover_mileage', 'handover_notes',
 ])]
 class Booking extends Model
 {
@@ -26,18 +27,20 @@ class Booking extends Model
     protected function casts(): array
     {
         return [
-            'start_date'   => 'date',
-            'end_date'     => 'date',
-            'days'         => 'integer',
-            'daily_price'  => 'decimal:2',
-            'subtotal'     => 'decimal:2',
-            'discount'     => 'decimal:2',
-            'tax'          => 'decimal:2',
-            'total'        => 'decimal:2',
-            'deposit'      => 'decimal:2',
-            'deposit_paid' => 'decimal:2',
-            'delivery'     => 'boolean',
-            'delivery_fee' => 'decimal:2',
+            'start_date'    => 'date',
+            'end_date'      => 'date',
+            'days'          => 'integer',
+            'daily_price'   => 'decimal:2',
+            'subtotal'      => 'decimal:2',
+            'discount'      => 'decimal:2',
+            'tax'           => 'decimal:2',
+            'total'         => 'decimal:2',
+            'deposit'       => 'decimal:2',
+            'deposit_paid'  => 'decimal:2',
+            'delivery'      => 'boolean',
+            'delivery_fee'  => 'decimal:2',
+            'handover_at'   => 'datetime',
+            'handover_mileage' => 'integer',
         ];
     }
 

@@ -186,8 +186,21 @@
     document.querySelectorAll('.rc-nav a').forEach(function (a) { a.classList.toggle('on', a.dataset.key === 'cars'); });
     let pending = []; // add-mode staged files: {file, url, main}
 
+    const ab = b.active_booking;
+    const handoverBanner = (id && ab) ? (
+      '<div class="handover-box">' +
+      '<div class="hb-row"><div><b>' + t('rented_now') + '</b><div class="muted" style="font-size:.84rem">' + esc(ab.reference || '') + ' · ' + esc(ab.customer ? ab.customer.name : '') + ' · ' + RC.date(ab.start_date) + ' → ' + RC.date(ab.end_date) + '</div></div>' +
+      (ab.handover_by
+        ? '<span class="rc-badge s-active">' + RC.icon('check', 14) + ' ' + t('handover_done') + '</span>'
+        : '<button class="rc-btn" id="hobtn">' + RC.icon('check', 16) + ' ' + t('confirm_handover') + '</button>') +
+      '</div>' +
+      (ab.handover_by ? '<div class="muted" style="font-size:.84rem;margin-top:8px">' + t('handover_by') + ': <b>' + esc(ab.handover_by) + '</b> · ' + t('handover_date') + ': ' + RC.date(ab.handover_at) + (ab.handover_mileage ? ' · ' + t('mileage') + ': ' + ab.handover_mileage : '') + (ab.handover_receipt ? ' · <a href="' + esc(ab.handover_receipt) + '" target="_blank">' + t('voucher') + '</a>' : '') + '</div>' : '') +
+      '</div>'
+    ) : '';
+
     view().innerHTML =
       '<a class="pg-back" id="back">‹ ' + t('cars') + '</a>' +
+      handoverBanner +
       '<div class="car-form-page">' +
       '<form class="cf-main rc-card rc-form" id="carf">' +
       '<div class="row">' + field(t('name') + ' (ع)', input('name_ar', b.name_ar)) + field(t('name') + ' (EN)', input('name_en', b.name_en)) + '</div>' +
@@ -209,6 +222,26 @@
 
     $('#back').onclick = function () { location.href = 'cars.html'; };
     $('#cancel').onclick = function () { location.href = 'cars.html'; };
+    if ($('#hobtn')) $('#hobtn').onclick = function () { handoverForm(ab); };
+
+    function handoverForm(booking) {
+      const today = new Date().toISOString().slice(0, 10);
+      const body = '<form class="rc-form" id="hof">' +
+        field(t('handover_by'), input('handover_by', (ME && ME.name) || '')) +
+        '<div class="row">' + field(t('handover_date'), input('handover_at', today, 'date')) + field(t('mileage'), input('handover_mileage', '', 'number')) + '</div>' +
+        field(t('voucher'), '<input class="rc-input" type="file" name="receipt" accept="image/*">') +
+        field(t('notes'), textarea('handover_notes', '')) +
+        '</form>';
+      const w = RC.modal(t('confirm_handover'), body, '<button class="rc-btn ghost" onclick="RC.closeModal()">' + t('cancel') + '</button><button class="rc-btn" id="hos">' + t('confirm_handover') + '</button>');
+      $('#hos', w).onclick = async function () {
+        const f = $('#hof', w); f.querySelectorAll('.err').forEach(function (e) { e.remove(); });
+        const fd = new FormData(f);
+        if (!fd.get('receipt') || !fd.get('receipt').name) fd.delete('receipt');
+        Array.from(fd.keys()).forEach(function (k) { if (fd.get(k) === '') fd.delete(k); });
+        try { await RC.apiForm('POST', '/admin/bookings/' + booking.id + '/handover', fd); RC.closeModal(); RC.toast(t('saved')); PAGES['car-form'](); }
+        catch (e) { err(e, f); }
+      };
+    }
 
     function count() { return id ? (b.images || []).length : pending.length; }
     function drawGal() {
@@ -533,17 +566,26 @@
     view().innerHTML = '<p>' + t('loading') + '</p>';
     const r = await RC.api('GET', '/admin/settings');
     const c = r.company;
-    view().innerHTML = '<div class="rc-card" style="max-width:720px"><form class="rc-form" id="setf">' +
-      '<div class="row">' + field(t('name'), input('name', c.name)) + field(t('phone'), input('phone', c.phone)) + '</div>' +
-      '<div class="row">' + field(t('email'), input('email', c.email, 'email')) + field(t('city'), input('city', c.city)) + '</div>' +
+    view().innerHTML = '<div class="settings-page"><form id="setf">' +
+      '<div class="settings-grid">' +
+      '<div class="rc-card set-card"><h3>' + RC.icon('settings', 18) + ' ' + t('company') + '</h3><div class="rc-form">' +
+      field(t('name'), input('name', c.name)) +
+      '<div class="row">' + field(t('phone'), input('phone', c.phone)) + field(t('email'), input('email', c.email, 'email')) + '</div>' +
+      '<div class="row">' + field(t('city'), input('city', c.city)) + field(t('currency'), input('currency', c.currency)) + '</div>' +
       field(t('address'), input('address', c.address)) +
-      '<div class="row">' + field(t('currency'), input('currency', c.currency)) + field(t('tax_rate'), input('tax_rate', c.tax_rate, 'number')) + '</div>' +
-      '<div class="row">' + field(t('invoice_prefix'), input('invoice_prefix', c.invoice_prefix)) + field(t('logo'), '<input class="rc-input" type="file" name="logo" accept="image/*">') + '</div>' +
-      '<h3 style="font-size:.95rem;margin:6px 0 2px;display:flex;gap:7px;align-items:center">' + RC.icon('bank', 18) + ' ' + t('payment_details') + '</h3>' +
-      '<div class="row">' + field(t('bank_name'), input('bank_name', c.bank_name)) + field(t('account_name'), input('account_name', c.account_name)) + '</div>' +
+      field(t('logo'), '<input class="rc-input" type="file" name="logo" accept="image/*">') +
+      '</div></div>' +
+      '<div class="rc-card set-card"><h3>' + RC.icon('bank', 18) + ' ' + t('payment_details') + '</h3><div class="rc-form">' +
+      field(t('bank_name'), input('bank_name', c.bank_name)) +
+      field(t('account_name'), input('account_name', c.account_name)) +
       '<div class="row">' + field(t('iban'), input('iban', c.iban)) + field(t('stc_pay'), input('stc_pay', c.stc_pay)) + '</div>' +
+      '<h3 style="margin-top:6px">' + RC.icon('invoices', 18) + ' ' + t('invoices') + '</h3>' +
+      '<div class="row">' + field(t('tax_rate'), input('tax_rate', c.tax_rate, 'number')) + field(t('invoice_prefix'), input('invoice_prefix', c.invoice_prefix)) + '</div>' +
       field(t('delivery_fee'), '<input class="rc-input" name="s_delivery_fee" type="number" value="' + esc((r.settings && r.settings.delivery_fee) || '') + '">') +
-      '<button class="rc-btn" id="setsave" type="button">' + t('save') + '</button></form></div>';
+      '</div></div>' +
+      '</div>' +
+      '<div style="margin-top:16px"><button class="rc-btn navy" id="setsave" type="button">' + RC.icon('check', 16) + ' ' + t('save') + '</button></div>' +
+      '</form></div>';
     $('#setsave').onclick = async function () {
       const f = $('#setf'); f.querySelectorAll('.err').forEach(function (e) { e.remove(); });
       const logo = f.logo.files[0];

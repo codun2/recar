@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Http\Controllers\Concerns\HandlesUploads;
 use App\Http\Controllers\Controller;
 use App\Models\AppNotification;
 use App\Models\Booking;
@@ -13,6 +14,8 @@ use Illuminate\Validation\ValidationException;
 /** CRUD + status flow for bookings (tenant-scoped). */
 class BookingController extends Controller
 {
+    use HandlesUploads;
+
     public function index(Request $request)
     {
         $bookings = Booking::query()
@@ -157,6 +160,50 @@ class BookingController extends Controller
         $booking->delete();
 
         return response()->json(['message' => 'تم حذف الحجز.']);
+    }
+
+    /**
+     * Confirm the physical handover of the car to the renter: who handed it
+     * over, when, the voucher/receipt, mileage and notes. Activates the booking
+     * and marks the car rented.
+     */
+    public function handover(Request $request, Booking $booking)
+    {
+        $data = $request->validate([
+            'handover_by'      => ['required', 'string', 'max:160'],
+            'handover_at'      => ['nullable', 'date'],
+            'handover_mileage' => ['nullable', 'integer', 'min:0'],
+            'handover_notes'   => ['nullable', 'string'],
+            'receipt'          => ['nullable', 'image', 'max:4096'],
+        ]);
+
+        $booking->handover_by = $data['handover_by'];
+        $booking->handover_at = $data['handover_at'] ?? Carbon::now();
+        $booking->handover_mileage = $data['handover_mileage'] ?? null;
+        $booking->handover_notes = $data['handover_notes'] ?? null;
+        if ($request->hasFile('receipt')) {
+            $booking->handover_receipt = $this->storeImage($request->file('receipt'), 'handovers');
+        }
+
+        if (! in_array($booking->status, ['completed', 'cancelled'], true)) {
+            $booking->status = 'active';
+        }
+        $booking->save();
+
+        if ($booking->car) {
+            $booking->car->update(['status' => 'rented']);
+        }
+
+        AppNotification::notify('booking', [
+            'title_ar' => 'تأكيد استلام سيارة',
+            'title_en' => 'Car handover confirmed',
+            'body_ar'  => "تم تسليم سيارة الحجز {$booking->reference} بواسطة {$booking->handover_by}",
+            'body_en'  => "Car handed over for {$booking->reference} by {$booking->handover_by}",
+            'link'     => '/admin/bookings.html',
+            'data'     => ['booking_id' => $booking->id],
+        ]);
+
+        return response()->json($booking->fresh()->load(['customer', 'car']));
     }
 
     /** Check availability + price for a car over a date range (booking form). */

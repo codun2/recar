@@ -27,14 +27,25 @@ class CarController extends Controller
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->category_id, fn ($q, $c) => $q->where('category_id', $c))
             ->orderByDesc('id')
-            ->paginate(20);
+            ->paginate(15);
 
         return response()->json($cars);
     }
 
     public function show(Car $car)
     {
-        return response()->json($car->load(['category:id,name_ar,name_en', 'images']));
+        $car->load(['category:id,name_ar,name_en', 'images']);
+
+        // Active rental (if the car is currently handed out) — for the handover panel.
+        $active = $car->bookings()
+            ->whereIn('status', ['active', 'confirmed'])
+            ->with('customer:id,name,phone')
+            ->orderByDesc('start_date')->first();
+
+        $data = $car->toArray();
+        $data['active_booking'] = $active;
+
+        return response()->json($data);
     }
 
     /** Rental history/timeline for one car: who rented it, when, and totals. */

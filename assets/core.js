@@ -52,6 +52,7 @@
       full_payment_required: 'التوصيل يتطلب سداد كامل المبلغ', confirm_booking: 'تأكيد الحجز', awaiting_confirmation: 'بانتظار التأكيد',
       create_invoice: 'إنشاء فاتورة', view_invoice: 'عرض الفاتورة', paid: 'مدفوع', inventory: 'المخزون', transfer_to: 'حوّل إلى',
       rental_history: 'سجلّ التأجير', times_rented: 'مرات التأجير', total_days: 'إجمالي الأيام', no_history: 'لم تُؤجَّر بعد', rented_by: 'المستأجر', period: 'الفترة',
+      confirm_handover: 'تأكيد استلام السيارة', handover: 'الاستلام', handover_by: 'اسم الموظف المسلِّم', handover_date: 'تاريخ الاستلام', mileage: 'قراءة العدّاد', voucher: 'الوصل', handover_done: 'تم تأكيد الاستلام', rented_now: 'هذه السيارة مؤجّرة حالياً',
     },
     en: {
       app: 'Sayyar', dashboard: 'Dashboard', cars: 'Cars', categories: 'Categories',
@@ -97,6 +98,7 @@
       full_payment_required: 'Delivery requires full payment', confirm_booking: 'Confirm booking', awaiting_confirmation: 'Awaiting confirmation',
       create_invoice: 'Create invoice', view_invoice: 'View invoice', paid: 'Paid', inventory: 'Inventory', transfer_to: 'Transfer to',
       rental_history: 'Rental history', times_rented: 'Times rented', total_days: 'Total days', no_history: 'Not rented yet', rented_by: 'Rented by', period: 'Period',
+      confirm_handover: 'Confirm car handover', handover: 'Handover', handover_by: 'Handed over by', handover_date: 'Handover date', mileage: 'Odometer', voucher: 'Voucher', handover_done: 'Handover confirmed', rented_now: 'This car is currently rented',
     },
   };
 
@@ -158,8 +160,9 @@
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
   let CURRENCY = localStorage.getItem('recar_currency') || 'SAR';
   function setCurrency(c) { if (c) { CURRENCY = c; localStorage.setItem('recar_currency', c); } }
-  function money(n) { const v = Number(n || 0); return v.toLocaleString(LANG === 'ar' ? 'ar-EG' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' ' + CURRENCY; }
-  function date(d) { if (!d) return '—'; const dt = new Date(d); return dt.toLocaleDateString(LANG === 'ar' ? 'ar-EG' : 'en-GB', { year: 'numeric', month: 'short', day: 'numeric' }); }
+  // Numbers always use Latin (English) digits, in both languages.
+  function money(n) { const v = Number(n || 0); return v.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' ' + CURRENCY; }
+  function date(d) { if (!d) return '—'; const dt = new Date(d); return dt.toLocaleDateString(LANG === 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB', { year: 'numeric', month: 'short', day: 'numeric' }); }
   function toast(msg, type) {
     let box = document.getElementById('rc-toasts');
     if (!box) { box = document.createElement('div'); box.id = 'rc-toasts'; document.body.appendChild(box); }
