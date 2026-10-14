@@ -53,26 +53,46 @@
     document.querySelectorAll('[data-detail]').forEach(function (b) { b.onclick = function () { carDetail(b.dataset.detail); }; });
   };
 
+  // Full standalone car page (car-showroom style), rendered into the content area.
   async function carDetail(id) {
+    current = 'detail';
+    document.querySelectorAll('[data-tab]').forEach(function (a) { a.classList.remove('on'); });
+    view().innerHTML = '<p>' + t('loading') + '</p>';
     const c = await RC.api('GET', '/customer/cars/' + id);
+    $('#rc-title').textContent = L(c, 'name');
     const imgs = (c.images || []).map(function (im) { return im.path; });
     const gallery = (c.image ? [c.image] : []).concat(imgs.filter(function (p) { return p !== c.image; }));
     const off = c.offer_price && +c.offer_price > 0;
-    const spec = function (k, v) { return '<div class="spec"><div class="k">' + k + '</div><div class="v">' + v + '</div></div>'; };
-    const body = '<div class="car-detail"><div>' +
-      '<div class="hero-img" id="hero" ' + (gallery[0] ? 'style="background-image:url(' + esc(gallery[0]) + ')"' : '') + '>' + (gallery[0] ? '' : RC.icon('car', 44)) + '</div>' +
-      (gallery.length > 1 ? '<div class="thumbs" id="thumbs">' + gallery.map(function (g, i) { return '<img src="' + esc(g) + '" class="' + (i === 0 ? 'on' : '') + '" data-g="' + esc(g) + '">'; }).join('') + '</div>' : '') +
-      '</div><div>' +
-      '<h2 style="font-size:1.4rem">' + esc(L(c, 'name')) + '</h2>' +
-      '<div class="price" style="font-size:1.4rem;font-weight:900;color:var(--navy);margin:6px 0">' + (off ? '<span class="price-was">' + RC.money(c.daily_price) + '</span>' : '') + RC.money(price(c)) + '<small style="font-size:.7rem;color:var(--muted)">' + t('per_day') + '</small></div>' +
-      '<div class="spec-grid">' + spec(t('category'), esc(c.category ? L(c.category, 'name') : '—')) + spec(t('transmission'), t(c.transmission)) + spec(t('fuel'), t(c.fuel)) + spec(t('seats'), c.seats || 5) + spec(t('year'), c.year || '—') + spec(t('deposit'), RC.money(c.deposit)) + '</div>' +
-      (L(c, 'description') ? '<p style="color:var(--muted);font-size:.9rem">' + esc(L(c, 'description')) + '</p>' : '') +
-      '<button class="rc-btn" id="bkd" style="width:100%;justify-content:center;margin-top:8px">' + t('book_now') + '</button>' +
+    const spec = function (ic, k, v) { return '<div class="spec"><div class="sp-ic">' + RC.icon(ic, 18) + '</div><div><div class="k">' + k + '</div><div class="v">' + v + '</div></div></div>'; };
+    view().innerHTML =
+      '<a class="pg-back" id="back">‹ ' + t('browse_cars') + '</a>' +
+      '<div class="showroom"><div class="sr-gallery">' +
+      '<div class="sr-main" id="srmain" ' + (gallery[0] ? 'style="background-image:url(' + esc(gallery[0]) + ')"' : '') + '>' + (gallery[0] ? '' : RC.icon('car', 54)) + (off ? '<span class="offer-badge">' + esc(c.offer_label || t('offer')) + '</span>' : '') + '</div>' +
+      (gallery.length > 1 ? '<div class="sr-thumbs" id="thumbs">' + gallery.map(function (g, i) { return '<img src="' + esc(g) + '" class="' + (i === 0 ? 'on' : '') + '" data-g="' + esc(g) + '">'; }).join('') + '</div>' : '') +
+      '</div>' +
+      '<div class="sr-info">' +
+      '<h1>' + esc(L(c, 'name')) + '</h1>' +
+      (c.category ? '<div class="sr-cat">' + esc(L(c.category, 'name')) + '</div>' : '') +
+      '<div class="sr-price">' + (off ? '<span class="price-was">' + RC.money(c.daily_price) + '</span>' : '') + RC.money(price(c)) + '<small>' + t('per_day') + '</small></div>' +
+      '<div class="spec-grid">' + spec('categories', t('category'), esc(c.category ? L(c.category, 'name') : '—')) + spec('settings', t('transmission'), t(c.transmission)) + spec('offer', t('fuel'), t(c.fuel)) + spec('customers', t('seats'), (c.seats || 5)) + spec('calendar', t('year'), (c.year || '—')) + spec('wallet', t('deposit'), RC.money(c.deposit)) + '</div>' +
+      (L(c, 'description') ? '<p class="sr-desc">' + esc(L(c, 'description')) + '</p>' : '') +
+      '<form class="sr-book" id="bf"><h3>' + t('book_now') + '</h3>' +
+      '<div class="row">' + field(t('start_date'), input('start_date', '', 'date')) + field(t('end_date'), input('end_date', '', 'date')) + '</div>' +
+      '<label class="chk"><input type="checkbox" name="delivery" id="delc"> ' + t('request_delivery') + '</label>' +
+      '<div id="delbox" style="display:none">' + field(t('delivery_address'), input('delivery_address', '')) + '<p class="muted" style="font-size:.78rem;margin:0">' + t('full_payment_required') + '</p></div>' +
+      '<div id="q" style="font-weight:800;color:var(--navy);margin:4px 0"></div>' +
+      '<input type="hidden" name="car_id" value="' + c.id + '">' +
+      '<button type="button" class="rc-btn" id="rentbtn" style="width:100%;justify-content:center">' + t('rent') + '</button>' +
+      '</form>' +
       '</div></div>';
-    const w = RC.modal(L(c, 'name'), body);
-    const hero = $('#hero', w);
-    w.querySelectorAll('#thumbs img').forEach(function (im) { im.onclick = function () { hero.style.backgroundImage = 'url(' + im.dataset.g + ')'; hero.innerHTML = ''; w.querySelectorAll('#thumbs img').forEach(function (x) { x.classList.remove('on'); }); im.classList.add('on'); }; });
-    $('#bkd', w).onclick = function () { RC.closeModal(); bookForm(c); };
+    const main = $('#srmain');
+    document.querySelectorAll('#thumbs img').forEach(function (im) { im.onclick = function () { main.style.backgroundImage = 'url(' + im.dataset.g + ')'; main.querySelectorAll('svg').forEach(function (s) { s.remove(); }); document.querySelectorAll('#thumbs img').forEach(function (x) { x.classList.remove('on'); }); im.classList.add('on'); }; });
+    $('#back').onclick = function () { go('browse'); };
+    const f = $('#bf');
+    $('#delc').onchange = function () { $('#delbox').style.display = this.checked ? '' : 'none'; };
+    function quote() { if (f.start_date.value && f.end_date.value) { const d1 = new Date(f.start_date.value), d2 = new Date(f.end_date.value); const days = Math.max(1, Math.round((d2 - d1) / 86400000)); $('#q').textContent = days + ' ' + t('days') + ' · ' + RC.money(days * price(c)); } }
+    f.start_date.onchange = quote; f.end_date.onchange = quote;
+    $('#rentbtn').onclick = async function () { f.querySelectorAll('.err').forEach(function (e) { e.remove(); }); const d = formData(f); d.delivery = f.delivery.checked ? 1 : 0; try { await RC.api('POST', '/customer/bookings', d); RC.toast(t('saved')); go('bookings'); } catch (e) { err(e, f); } };
   }
 
   function bookForm(car) {

@@ -224,3 +224,27 @@ table.rc-table{width:100%;border-collapse:collapse;font-size:.9rem}
 
 /* detail hero on narrow */
 @media(max-width:600px){ .spec-grid{grid-template-columns:1fr} }
+
+/* ===== car showroom detail page ===== */
+.pg-back{display:inline-flex;align-items:center;gap:4px;color:var(--muted);font-weight:800;margin-bottom:14px;cursor:pointer}
+.pg-back:hover{color:var(--navy)}
+.showroom{display:grid;grid-template-columns:1.25fr 1fr;gap:26px;align-items:start}
+.sr-gallery{position:sticky;top:84px}
+.sr-main{position:relative;width:100%;height:380px;border-radius:18px;background:#eef2f8 center/cover no-repeat;display:grid;place-items:center;color:#aab6c6;box-shadow:var(--shadow)}
+.sr-main svg{width:54px;height:54px}
+.sr-thumbs{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.sr-thumbs img{width:88px;height:66px;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:pointer;transition:all .15s}
+.sr-thumbs img:hover{border-color:var(--amber)}
+.sr-thumbs img.on{outline:2px solid var(--amber);outline-offset:1px}
+.sr-info h1{font-size:1.7rem;font-weight:900;color:var(--navy)}
+.sr-info .sr-cat{color:var(--muted);font-weight:700;margin-top:2px}
+.sr-price{font-size:1.9rem;font-weight:900;color:var(--navy);margin:12px 0}
+.sr-price small{font-size:.8rem;color:var(--muted);font-weight:600}
+.sr-info .spec-grid{grid-template-columns:1fr 1fr;gap:12px}
+.sr-info .spec{display:flex;gap:11px;align-items:center;background:#f3f6fb;border-radius:12px;padding:12px}
+.sr-info .spec .sp-ic{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:10px;background:#fff;color:var(--navy)}
+.sr-desc{color:var(--muted);line-height:1.9;margin:14px 0}
+.sr-book{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px;display:grid;gap:12px;margin-top:8px}
+.sr-book h3{font-size:1.05rem}
+@media(max-width:860px){ .showroom{grid-template-columns:1fr} .sr-gallery{position:static} .sr-main{height:260px} }
+@media(max-width:480px){ .sr-info .spec-grid{grid-template-columns:1fr} }
