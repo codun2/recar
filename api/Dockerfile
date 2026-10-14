@@ -18,7 +18,16 @@ EXPOSE 8000
 CMD ["sh", "-c", "\
     [ -d vendor ] || composer install --no-interaction --prefer-dist --optimize-autoloader; \
     [ -f .env ] || cp .env.example .env; \
-    php -r \"echo trim(getenv('APP_KEY') ?: '');\" | grep -q . || grep -q '^APP_KEY=base64' .env || php artisan key:generate --force; \
+    grep -q '^APP_KEY=base64' .env || php artisan key:generate --force; \
+    set_env() { grep -q \"^$1=\" .env && sed -i \"s|^$1=.*|$1=$2|\" .env || echo \"$1=$2\" >> .env; }; \
+    [ -n \"$DB_CONNECTION\" ] && set_env DB_CONNECTION \"$DB_CONNECTION\"; \
+    [ -n \"$DB_HOST\" ] && set_env DB_HOST \"$DB_HOST\"; \
+    [ -n \"$DB_PORT\" ] && set_env DB_PORT \"$DB_PORT\"; \
+    [ -n \"$DB_DATABASE\" ] && set_env DB_DATABASE \"$DB_DATABASE\"; \
+    [ -n \"$DB_USERNAME\" ] && set_env DB_USERNAME \"$DB_USERNAME\"; \
+    [ -n \"$DB_PASSWORD\" ] && set_env DB_PASSWORD \"$DB_PASSWORD\"; \
+    [ -n \"$APP_ENV\" ] && set_env APP_ENV \"$APP_ENV\"; \
+    [ -n \"$APP_URL\" ] && set_env APP_URL \"$APP_URL\"; \
     php artisan storage:link --force || true; \
     until php artisan migrate --force 2>/dev/null; do echo 'waiting for db...'; sleep 3; done; \
     php artisan db:seed --force || true; \

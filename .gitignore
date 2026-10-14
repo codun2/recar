@@ -25,3 +25,7 @@ api/.phpunit.result.cache
 # OS
 .DS_Store
 Thumbs.db
+
+# host-side backups
+*.static.bak
+nginx-recar.vhost.static.bak
