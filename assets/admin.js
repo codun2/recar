@@ -201,6 +201,12 @@
         '<div class="handover-box">' +
         '<div class="hb-row"><div><b>' + (isActive ? t('rented_now') : t('ready_to_deliver')) + '</b><div class="muted" style="font-size:.84rem">' + meta + '</div></div>' + action + '</div>' +
         delivered + '</div>';
+    } else if (id && b.status === 'rented') {
+      // Manually marked "rented" with no linked booking → offer a simple return to availability.
+      handoverBanner =
+        '<div class="handover-box">' +
+        '<div class="hb-row"><div><b>' + t('rented_now') + '</b></div>' +
+        '<button class="rc-btn" id="mret">' + RC.icon('check', 16) + ' ' + t('confirm_handover') + '</button></div></div>';
     }
 
     view().innerHTML =
@@ -229,6 +235,11 @@
     $('#cancel').onclick = function () { location.href = 'cars.html'; };
     if ($('#hobtn')) $('#hobtn').onclick = function () { handoverForm(ab); };
     if ($('#delbtn')) $('#delbtn').onclick = function () { deliverForm(ab); };
+    if ($('#mret')) $('#mret').onclick = async function () {
+      if (!(await RC.confirm(t('confirm_handover') + '؟'))) return;
+      try { await RC.api('PATCH', '/admin/cars/' + id + '/status', { status: 'available' }); RC.toast(t('saved')); PAGES['car-form'](); }
+      catch (e) { err(e); }
+    };
 
     function deliverForm(booking) {
       const now = new Date(); const todayT = now.toISOString().slice(0, 16);
