@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'phone', 'email', 'address', 'city', 'logo', 'currency', 'locale',
     'tax_rate', 'invoice_prefix',
     'bank_name', 'account_name', 'iban', 'stc_pay',
+    'theme', 'theme_custom',
 ])]
 class Company extends Model
 {
@@ -25,6 +26,7 @@ class Company extends Model
             'trial_ends_at'        => 'datetime',
             'subscription_ends_at' => 'datetime',
             'tax_rate'             => 'decimal:2',
+            'theme_custom'         => 'array',
         ];
     }
 

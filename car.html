@@ -33,6 +33,7 @@
         const r = await RC.api('GET', '/companies/' + slug + '/cars/' + id);
         const c = r.car, t = RC.t, esc = RC.esc, L = RC.L;
         if (r.company && r.company.currency) RC.setCurrency(r.company.currency);
+        if (r.company) RC.applyPreset(r.company.theme, r.company.theme_custom);
         const off = c.offer_price && +c.offer_price > 0;
         const dp = off ? +c.offer_price : +c.daily_price;
         const imgs = (c.images || []).map(function (im) { return im.path; });

@@ -119,6 +119,8 @@ class CustomerAuthController extends Controller
                 'account_name' => $company->account_name,
                 'iban'         => $company->iban,
                 'stc_pay'      => $company->stc_pay,
+                'theme'        => $company->theme,
+                'theme_custom' => $company->theme_custom,
             ] : null,
         ]);
     }

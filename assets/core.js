@@ -55,6 +55,11 @@
       confirm_handover: 'تأكيد استلام السيارة', handover: 'الاستلام', handover_by: 'اسم الموظف المستلِم', handover_date: 'تاريخ الاستلام', mileage: 'قراءة العدّاد', voucher: 'الوصل', handover_done: 'تم الاستلام', rented_now: 'هذه السيارة مؤجّرة حالياً',
       car_now_available: 'السيارة أصبحت متاحة للتأجير', settle_remaining: 'تخليص المبلغ المتبقّي وإضافته للفاتورة', basic_info: 'البيانات الأساسية', account_info: 'بيانات الحساب', job_title: 'المسمّى الوظيفي',
       deliver_car: 'تسليم السيارة للعميل', delivered_by: 'اسم الموظف المسلِّم', delivered_date: 'تاريخ ووقت التسليم', ready_to_deliver: 'السيارة محجوزة — جاهزة للتسليم', delivered_done: 'تم التسليم للعميل', delivery_info: 'بيانات التسليم', return_info: 'بيانات الاستلام',
+      appearance: 'المظهر', theme_template: 'قالب المعرض', theme_hint: 'اختر مظهراً كاملاً لواجهتك بضغطة — يشمل الألوان والزوايا والخط.', theme_active: 'المُفعّل',
+      theme_gold: 'ذهبي فاخر', theme_royal: 'أزرق ملكي', theme_mint: 'أخضر عصري', theme_minimal: 'أبيض مينيمال', theme_vivid: 'جريء ملوّن',
+      advanced_custom: 'تخصيص متقدّم', advanced_hint: 'لمساً نهائياً: عدّل الألوان والزوايا والخط، أو أضف CSS خاص. اتركه فارغاً لاستخدام القالب كما هو.',
+      accent_color: 'اللون الأساسي', accent_dark_color: 'درجة أغمق', sidebar_color: 'لون الشريط الجانبي', on_accent_color: 'لون النص فوق اللون الأساسي',
+      corner_radius: 'انحناء الزوايا', font_family: 'الخط', custom_css: 'CSS مخصّص', reset_custom: 'تصفير التخصيص', font_default: 'الافتراضي (حسب القالب)',
     },
     en: {
       app: 'Sayyar', dashboard: 'Dashboard', cars: 'Cars', categories: 'Categories',
@@ -103,6 +108,11 @@
       confirm_handover: 'Confirm car return', handover: 'Return', handover_by: 'Received by', handover_date: 'Return date', mileage: 'Odometer', voucher: 'Voucher', handover_done: 'Returned', rented_now: 'This car is currently rented',
       car_now_available: 'The car is now available for rent', settle_remaining: 'Settle the remaining balance (add to invoice)', basic_info: 'Basic info', account_info: 'Account', job_title: 'Job title',
       deliver_car: 'Deliver car to renter', delivered_by: 'Delivered by', delivered_date: 'Delivery date/time', ready_to_deliver: 'Reserved — ready to deliver', delivered_done: 'Delivered', delivery_info: 'Delivery details', return_info: 'Return details',
+      appearance: 'Appearance', theme_template: 'Storefront template', theme_hint: 'Pick a complete look for your storefront in one click — colors, corners and font.', theme_active: 'Active',
+      theme_gold: 'Luxury Gold', theme_royal: 'Royal Blue', theme_mint: 'Modern Mint', theme_minimal: 'Minimal White', theme_vivid: 'Bold Vivid',
+      advanced_custom: 'Advanced customization', advanced_hint: 'The finishing touch: tweak colors, corners and font, or add custom CSS. Leave empty to use the template as-is.',
+      accent_color: 'Accent color', accent_dark_color: 'Darker shade', sidebar_color: 'Sidebar color', on_accent_color: 'Text on accent',
+      corner_radius: 'Corner radius', font_family: 'Font', custom_css: 'Custom CSS', reset_custom: 'Reset customization', font_default: 'Default (from template)',
     },
   };
 
@@ -131,6 +141,42 @@
     }
     document.querySelectorAll('.rc-theme-opt').forEach(function (o) { o.classList.toggle('on', o.dataset.theme === THEME); });
   }
+
+  /* ---------- preset (company brand theme; Level 2 presets + Level 3 custom) ---------- */
+  const PRESETS = ['gold', 'royal', 'mint', 'minimal', 'vivid'];
+  let PRESET = (function () { try { return localStorage.getItem('recar_preset') || 'gold'; } catch (e) { return 'gold'; } })();
+  let PRESET_CUSTOM = (function () { try { return JSON.parse(localStorage.getItem('recar_preset_custom') || 'null'); } catch (e) { return null; } })();
+  if (PRESETS.indexOf(PRESET) < 0) PRESET = 'gold';
+  function hexToRgb(h) {
+    h = String(h || '').trim().replace('#', '');
+    if (h.length === 3) h = h.split('').map(function (c) { return c + c; }).join('');
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    return parseInt(h.slice(0, 2), 16) + ',' + parseInt(h.slice(2, 4), 16) + ',' + parseInt(h.slice(4, 6), 16);
+  }
+  const CUSTOM_VARS = ['--amber', '--amber-dark', '--navy', '--navy-2', '--on-accent', '--radius', '--accent-rgb', '--font'];
+  function applyCustomTokens(custom) {
+    const root = document.documentElement;
+    CUSTOM_VARS.forEach(function (v) { root.style.removeProperty(v); });
+    const old = document.getElementById('rc-custom-css'); if (old) old.remove();
+    if (!custom || typeof custom !== 'object') return;
+    if (custom.accent) { root.style.setProperty('--amber', custom.accent); const rgb = hexToRgb(custom.accent); if (rgb) root.style.setProperty('--accent-rgb', rgb); }
+    if (custom.accent_dark) root.style.setProperty('--amber-dark', custom.accent_dark);
+    if (custom.on_accent) root.style.setProperty('--on-accent', custom.on_accent);
+    if (custom.sidebar) { root.style.setProperty('--navy', custom.sidebar); root.style.setProperty('--navy-2', custom.sidebar); }
+    if (custom.radius) root.style.setProperty('--radius', /^\d+$/.test(custom.radius) ? custom.radius + 'px' : custom.radius);
+    if (custom.font) root.style.setProperty('--font', custom.font);
+    if (custom.css) { const st = document.createElement('style'); st.id = 'rc-custom-css'; st.textContent = String(custom.css).replace(/<\/?(style|script)[^>]*>/gi, ''); (document.head || document.documentElement).appendChild(st); }
+  }
+  function applyPreset(name, custom) {
+    PRESET = PRESETS.indexOf(name) >= 0 ? name : 'gold';
+    PRESET_CUSTOM = (custom && typeof custom === 'object') ? custom : null;
+    try { localStorage.setItem('recar_preset', PRESET); localStorage.setItem('recar_preset_custom', JSON.stringify(PRESET_CUSTOM)); } catch (e) {}
+    document.documentElement.setAttribute('data-preset', PRESET);
+    applyCustomTokens(PRESET_CUSTOM);
+  }
+  // Apply cached preset immediately (before paint) to avoid a flash of the default brand.
+  try { document.documentElement.setAttribute('data-preset', PRESET); applyCustomTokens(PRESET_CUSTOM); } catch (e) {}
+
   function applyLang(lang) {
     LANG = lang; localStorage.setItem('recar_lang', lang);
     const html = document.documentElement;
@@ -398,6 +444,7 @@
     esc: esc, money: money, date: date, setCurrency: setCurrency, toast: toast,
     modal: modal, closeModal: closeModal, confirm: confirmDialog, badge: badge,
     enhanceSelects: enhanceSelects, icon: icon, applyTheme: applyTheme, initTheme: initTheme,
+    applyPreset: applyPreset, PRESETS: PRESETS,
     LOGIN_URL: LOGIN_URL,
   };
 })();

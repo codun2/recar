@@ -27,7 +27,7 @@ class PublicController extends Controller
     public function company(string $slug)
     {
         $company = Company::where('slug', $slug)->where('status', 'active')
-            ->firstOrFail(['id', 'name', 'slug', 'city', 'phone', 'email', 'address', 'logo', 'currency']);
+            ->firstOrFail(['id', 'name', 'slug', 'city', 'phone', 'email', 'address', 'logo', 'currency', 'theme', 'theme_custom']);
 
         return response()->json($company);
     }
@@ -52,7 +52,7 @@ class PublicController extends Controller
             ->where('company_id', $company->id)->orderBy('sort')->get(['id', 'name_ar', 'name_en']);
 
         return response()->json([
-            'company'    => ['id' => $company->id, 'name' => $company->name, 'slug' => $company->slug, 'currency' => $company->currency],
+            'company'    => ['id' => $company->id, 'name' => $company->name, 'slug' => $company->slug, 'currency' => $company->currency, 'theme' => $company->theme, 'theme_custom' => $company->theme_custom],
             'categories' => $categories,
             'cars'       => $cars,
         ]);
@@ -70,7 +70,7 @@ class PublicController extends Controller
             ->findOrFail($id);
 
         return response()->json([
-            'company' => ['id' => $company->id, 'name' => $company->name, 'slug' => $company->slug, 'currency' => $company->currency, 'phone' => $company->phone],
+            'company' => ['id' => $company->id, 'name' => $company->name, 'slug' => $company->slug, 'currency' => $company->currency, 'phone' => $company->phone, 'theme' => $company->theme, 'theme_custom' => $company->theme_custom],
             'car'     => $car,
         ]);
     }

@@ -12,7 +12,7 @@
 
   async function boot() {
     RC.guard();
-    try { const r = await RC.api('GET', '/customer/me'); USER = r.user; COMPANY = r.company; if (COMPANY) RC.setCurrency(COMPANY.currency); } catch (e) { return; }
+    try { const r = await RC.api('GET', '/customer/me'); USER = r.user; COMPANY = r.company; if (COMPANY) { RC.setCurrency(COMPANY.currency); RC.applyPreset(COMPANY.theme, COMPANY.theme_custom); } } catch (e) { return; }
     renderShell();
   }
 

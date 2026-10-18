@@ -32,3 +32,6 @@ nginx-recar.vhost.static.bak
 
 # dev-only test stack
 /docker-compose.test.yml
+
+# Host push credentials (never commit)
+/.git-credentials

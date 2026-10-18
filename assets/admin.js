@@ -25,7 +25,7 @@
     RC.initLang();
     try {
       const r = await RC.api('GET', '/admin/me');
-      ME = r.user; COMPANY = r.company; if (COMPANY) RC.setCurrency(COMPANY.currency);
+      ME = r.user; COMPANY = r.company; if (COMPANY) { RC.setCurrency(COMPANY.currency); RC.applyPreset(COMPANY.theme, COMPANY.theme_custom); }
     } catch (e) { return; }
     renderNav();
     paintUser();
@@ -630,10 +630,45 @@
   };
 
   /* ---- Settings ---- */
+  // preset swatch metadata (keep in sync with dash.css presets)
+  const THEMES = [
+    { key: 'gold', accent: '#d4af37', side: '#0b1f3a', radius: 14 },
+    { key: 'royal', accent: '#2563eb', side: '#0f1b35', radius: 12 },
+    { key: 'mint', accent: '#0ea5a0', side: '#0c2622', radius: 18 },
+    { key: 'minimal', accent: '#111827', side: '#111827', radius: 8 },
+    { key: 'vivid', accent: '#7c3aed', side: '#1e1142', radius: 20 },
+  ];
+  const FONTS = [
+    { v: '', l: 'font_default' }, { v: "'Tajawal',sans-serif", l: 'Tajawal' }, { v: "'Cairo',sans-serif", l: 'Cairo' },
+    { v: "'Readex Pro',sans-serif", l: 'Readex Pro' }, { v: "'Almarai',sans-serif", l: 'Almarai' },
+  ];
+
   PAGES.settings = async function () {
     view().innerHTML = '<p>' + t('loading') + '</p>';
     const r = await RC.api('GET', '/admin/settings');
     const c = r.company;
+    let selTheme = RC.PRESETS.indexOf(c.theme) >= 0 ? c.theme : 'gold';
+    const custom = (c.theme_custom && typeof c.theme_custom === 'object') ? Object.assign({}, c.theme_custom) : {};
+
+    const themeCard = function (m) {
+      return '<button type="button" class="theme-card' + (m.key === selTheme ? ' sel' : '') + '" data-theme="' + m.key + '" style="color:' + m.accent + '">' +
+        '<div class="tc-prev">' +
+        '<div class="tc-side" style="background:' + m.side + '"></div>' +
+        '<div class="tc-body"><div class="tc-bar"></div><div class="tc-bar sm"></div>' +
+        '<div class="tc-btn" style="background:' + m.accent + ';border-radius:' + Math.min(m.radius, 8) + 'px"></div></div>' +
+        '</div>' +
+        '<div class="tc-foot"><span class="tc-dot" style="background:' + m.accent + '"></span>' + t('theme_' + m.key) +
+        '<span class="tc-check">' + RC.icon('check', 13) + '</span></div>' +
+        '</button>';
+    };
+    const colorRow = function (key, labelKey) {
+      const v = custom[key] || '';
+      return '<div class="adv-color"><label>' + t(labelKey) + '</label><div class="cwrap">' +
+        '<input type="color" data-c="' + key + '" value="' + (/^#[0-9a-fA-F]{6}$/.test(v) ? v : '#000000') + '">' +
+        '<input type="text" data-t="' + key + '" value="' + esc(v) + '" placeholder="#______" spellcheck="false">' +
+        '<button type="button" class="clr" data-clr="' + key + '" title="×">×</button></div></div>';
+    };
+
     view().innerHTML = '<div class="settings-page"><form id="setf">' +
       '<div class="settings-grid">' +
       '<div class="rc-card set-card"><h3>' + RC.icon('settings', 18) + ' ' + t('company') + '</h3><div class="rc-form">' +
@@ -652,8 +687,59 @@
       field(t('delivery_fee'), '<input class="rc-input" name="s_delivery_fee" type="number" value="' + esc((r.settings && r.settings.delivery_fee) || '') + '">') +
       '</div></div>' +
       '</div>' +
+      // ---- appearance / theme presets ----
+      '<div class="rc-card" style="margin-top:16px"><h3>' + RC.icon('image', 18) + ' ' + t('appearance') + '</h3>' +
+      '<p class="muted" style="font-size:.85rem;margin:-6px 0 8px">' + t('theme_hint') + '</p>' +
+      '<div class="theme-grid" id="themegrid">' + THEMES.map(themeCard).join('') + '</div>' +
+      '<div class="adv-wrap" id="advwrap" style="margin-top:18px;border-top:1px solid var(--line);padding-top:12px">' +
+      '<div class="adv-head" id="advhead"><b>' + RC.icon('settings', 16) + ' ' + t('advanced_custom') + '</b><span class="chev">▾</span></div>' +
+      '<div class="adv-body">' +
+      '<p class="muted" style="font-size:.85rem;margin:2px 0 12px">' + t('advanced_hint') + '</p>' +
+      '<div class="adv-colors">' +
+      colorRow('accent', 'accent_color') + colorRow('accent_dark', 'accent_dark_color') +
+      colorRow('sidebar', 'sidebar_color') + colorRow('on_accent', 'on_accent_color') +
+      '</div>' +
+      '<div class="row" style="margin-top:12px">' +
+      field(t('corner_radius'), '<input class="rc-input" type="number" min="0" max="40" data-radius value="' + esc((custom.radius || '').toString().replace('px', '')) + '" placeholder="—">') +
+      field(t('font_family'), '<select class="rc-select" data-font>' + FONTS.map(function (o) { return '<option value="' + esc(o.v) + '"' + (o.v === (custom.font || '') ? ' selected' : '') + '>' + (o.l === 'font_default' ? t('font_default') : o.l) + '</option>'; }).join('') + '</select>') +
+      '</div>' +
+      field(t('custom_css'), '<textarea class="rc-input" data-css rows="4" spellcheck="false" placeholder=".rc-btn{ }">' + esc(custom.css || '') + '</textarea>') +
+      '<button type="button" class="rc-btn ghost sm" id="advreset" style="margin-top:4px">' + t('reset_custom') + '</button>' +
+      '</div></div>' +
+      '</div>' +
       '<div style="margin-top:16px"><button class="rc-btn navy" id="setsave" type="button">' + RC.icon('check', 16) + ' ' + t('save') + '</button></div>' +
       '</form></div>';
+
+    function pruneCustom() { Object.keys(custom).forEach(function (k) { if (custom[k] === '' || custom[k] == null) delete custom[k]; }); }
+    function preview() { pruneCustom(); RC.applyPreset(selTheme, Object.keys(custom).length ? custom : null); }
+    function markCards() { document.querySelectorAll('#themegrid .theme-card').forEach(function (b) { b.classList.toggle('sel', b.dataset.theme === selTheme); }); }
+
+    document.querySelectorAll('#themegrid .theme-card').forEach(function (b) {
+      b.onclick = function () { selTheme = b.dataset.theme; markCards(); preview(); };
+    });
+    const advwrap = $('#advwrap'); $('#advhead').onclick = function () { advwrap.classList.toggle('open'); };
+    if (Object.keys(custom).length) advwrap.classList.add('open');
+    document.querySelectorAll('.adv-color input[type=color]').forEach(function (ci) {
+      ci.oninput = function () { const k = ci.dataset.c; custom[k] = ci.value; const tx = document.querySelector('.adv-color input[data-t="' + k + '"]'); if (tx) tx.value = ci.value; preview(); };
+    });
+    document.querySelectorAll('.adv-color input[type=text]').forEach(function (tx) {
+      tx.oninput = function () { const k = tx.dataset.t; const v = tx.value.trim(); custom[k] = v; if (/^#[0-9a-fA-F]{6}$/.test(v)) { const ci = document.querySelector('.adv-color input[data-c="' + k + '"]'); if (ci) ci.value = v; } preview(); };
+    });
+    document.querySelectorAll('.adv-color .clr').forEach(function (btn) {
+      btn.onclick = function () { const k = btn.dataset.clr; delete custom[k]; const tx = document.querySelector('.adv-color input[data-t="' + k + '"]'); if (tx) tx.value = ''; preview(); };
+    });
+    const radEl = document.querySelector('[data-radius]'); if (radEl) radEl.oninput = function () { const v = radEl.value.trim(); if (v === '') delete custom.radius; else custom.radius = v + 'px'; preview(); };
+    const fontEl = document.querySelector('[data-font]'); if (fontEl) fontEl.onchange = function () { if (fontEl.value) custom.font = fontEl.value; else delete custom.font; preview(); };
+    const cssEl = document.querySelector('[data-css]'); if (cssEl) cssEl.oninput = function () { const v = cssEl.value; if (v.trim() === '') delete custom.css; else custom.css = v; preview(); };
+    $('#advreset').onclick = function () {
+      Object.keys(custom).forEach(function (k) { delete custom[k]; });
+      document.querySelectorAll('.adv-color input[data-t]').forEach(function (x) { x.value = ''; });
+      if (radEl) radEl.value = '';
+      if (fontEl) { fontEl.selectedIndex = 0; const w = fontEl.closest('.rc-ss'); if (w) { const lbl = w.querySelector('.lbl'); if (lbl) lbl.textContent = fontEl.options[0].text; } }
+      if (cssEl) cssEl.value = '';
+      preview();
+    };
+
     $('#setsave').onclick = async function () {
       const f = $('#setf'); f.querySelectorAll('.err').forEach(function (e) { e.remove(); });
       const logo = f.logo.files[0];
@@ -661,8 +747,12 @@
         const d = formData(f); delete d.logo;
         const deliveryFee = d.s_delivery_fee; delete d.s_delivery_fee;
         d.settings = { delivery_fee: deliveryFee || '0' };
+        pruneCustom();
+        d.theme = selTheme;
+        d.theme_custom = Object.keys(custom).length ? custom : null;
         await RC.api('PATCH', '/admin/settings', d);
         if (logo) { const fd = new FormData(); fd.append('logo', logo); await RC.apiForm('POST', '/admin/settings/logo', fd); }
+        RC.applyPreset(selTheme, d.theme_custom);
         RC.toast(t('saved')); RC.setCurrency(f.currency.value);
       } catch (e) { err(e, f); }
     };

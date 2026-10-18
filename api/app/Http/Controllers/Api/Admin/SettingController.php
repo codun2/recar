@@ -40,6 +40,15 @@ class SettingController extends Controller
             'account_name'   => ['nullable', 'string', 'max:160'],
             'iban'           => ['nullable', 'string', 'max:60'],
             'stc_pay'        => ['nullable', 'string', 'max:40'],
+            'theme'          => ['sometimes', 'in:gold,royal,mint,minimal,vivid'],
+            'theme_custom'             => ['nullable', 'array'],
+            'theme_custom.accent'      => ['nullable', 'string', 'max:24'],
+            'theme_custom.accent_dark' => ['nullable', 'string', 'max:24'],
+            'theme_custom.sidebar'     => ['nullable', 'string', 'max:24'],
+            'theme_custom.on_accent'   => ['nullable', 'string', 'max:24'],
+            'theme_custom.radius'      => ['nullable', 'string', 'max:8'],
+            'theme_custom.font'        => ['nullable', 'string', 'max:60'],
+            'theme_custom.css'         => ['nullable', 'string', 'max:6000'],
             'settings'       => ['nullable', 'array'],
         ]);
 
