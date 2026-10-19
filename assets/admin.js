@@ -8,6 +8,9 @@
     { key: 'dashboard', href: 'index.html', ic: 'dashboard', perm: null },
     { key: 'cars', href: 'cars.html', ic: 'cars', perm: 'cars' },
     { key: 'categories', href: 'categories.html', ic: 'categories', perm: 'categories' },
+    { key: 'branches', href: 'branches.html', ic: 'branch', perm: 'cars' },
+    { key: 'maintenance', href: 'maintenance.html', ic: 'wrench', perm: 'cars' },
+    { key: 'damages', href: 'damages.html', ic: 'damage', perm: 'cars' },
     { key: 'bookings', href: 'bookings.html', ic: 'bookings', perm: 'bookings' },
     { key: 'customers', href: 'customers.html', ic: 'customers', perm: 'customers' },
     { key: 'invoices', href: 'invoices.html', ic: 'invoices', perm: 'invoices' },
@@ -394,6 +397,128 @@
       const body = '<form class="rc-form" id="catf"><div class="row">' + field(t('name') + ' (ع)', input('name_ar', c.name_ar)) + field(t('name') + ' (EN)', input('name_en', c.name_en)) + '</div></form>';
       const w = RC.modal(c.id ? t('edit') : t('new_category'), body, '<button class="rc-btn ghost" onclick="RC.closeModal()">' + t('cancel') + '</button><button class="rc-btn" id="cs">' + t('save') + '</button>');
       $('#cs', w).onclick = async function () { const f = $('#catf', w); try { await RC.api(c.id ? 'PATCH' : 'POST', c.id ? '/admin/categories/' + c.id : '/admin/categories', formData(f)); RC.closeModal(); RC.toast(t('saved')); reload(); } catch (e) { err(e, f); } };
+    }
+  };
+
+  /* ---- Branches ---- */
+  PAGES.branches = function () {
+    crudList({
+      endpoint: '/admin/branches',
+      toolbar: function () { return toolbar('<h3 style="font-size:1rem">' + t('branches') + '</h3><div class="sp"></div><button class="rc-btn" id="rc-add">+ ' + t('new_branch') + '</button>'); },
+      render: function (bs) {
+        const rows = bs.map(function (b) { return '<tr><td><b>' + esc(b.name) + '</b>' + (b.is_primary ? ' <span class="rc-badge s-available">' + t('primary_branch') + '</span>' : '') + '</td><td>' + esc(b.city || '—') + '</td><td>' + esc(b.phone || '—') + '</td><td>' + (b.cars_count || 0) + ' ' + t('cars') + '</td><td class="rc-actions"><button class="rc-ic-btn" data-edit="' + b.id + '">' + RC.icon('edit', 16) + '</button> <button class="rc-ic-btn danger" data-del="' + b.id + '">' + RC.icon('trash', 16) + '</button></td></tr>'; }).join('');
+        return tableWrap([{ raw: t('name') }, { raw: t('city') }, { raw: t('phone') }, 'cars', 'actions'], rows);
+      },
+      bind: function (bs, reload) {
+        document.querySelectorAll('[data-edit]').forEach(function (b) { b.onclick = function () { brForm(bs.find(function (x) { return x.id == b.dataset.edit; }), reload); }; });
+        document.querySelectorAll('[data-del]').forEach(function (b) { b.onclick = async function () { if (await RC.confirm(t('confirm_delete'))) { await RC.api('DELETE', '/admin/branches/' + b.dataset.del); RC.toast(t('deleted')); reload(); } }; });
+      },
+      form: function (_, reload) { brForm(null, reload); },
+    });
+    function brForm(b, reload) {
+      b = b || {};
+      const body = '<form class="rc-form" id="brf">' +
+        field(t('name'), input('name', b.name)) +
+        '<div class="row">' + field(t('city'), input('city', b.city)) + field(t('phone'), input('phone', b.phone)) + '</div>' +
+        field(t('address'), input('address', b.address)) +
+        '<label class="chk"><input type="checkbox" name="is_primary" ' + (b.is_primary ? 'checked' : '') + '> ' + t('primary_branch') + '</label>' +
+        '</form>';
+      const w = RC.modal(b.id ? t('edit') : t('new_branch'), body, '<button class="rc-btn ghost" onclick="RC.closeModal()">' + t('cancel') + '</button><button class="rc-btn" id="brs">' + t('save') + '</button>');
+      $('#brs', w).onclick = async function () { const f = $('#brf', w); const d = formData(f); d.is_primary = f.is_primary.checked ? 1 : 0; try { await RC.api(b.id ? 'PATCH' : 'POST', b.id ? '/admin/branches/' + b.id : '/admin/branches', d); RC.closeModal(); RC.toast(t('saved')); reload(); } catch (e) { err(e, f); } };
+    }
+  };
+
+  // shared: fetch all cars for pickers
+  async function allCars() { try { const r = await RC.api('GET', '/admin/cars?per_page=1000'); return r.data || r; } catch (e) { return []; } }
+  function carOpts(cars, val) { return [{ v: '', l: '—' }].concat(cars.map(function (c) { return { v: c.id, l: L(c, 'name') + (c.plate_number ? ' · ' + c.plate_number : '') }; })); }
+
+  /* ---- Maintenance / service log ---- */
+  const MTYPES = [['service', 'svc_service'], ['oil', 'svc_oil'], ['repair', 'svc_repair'], ['inspection', 'svc_inspection'], ['tires', 'svc_tires'], ['battery', 'svc_battery'], ['insurance', 'svc_insurance'], ['other', 'svc_other']];
+  PAGES.maintenance = function () {
+    let CARS = [];
+    allCars().then(function (c) { CARS = c; });
+    crudList({
+      endpoint: '/admin/maintenance',
+      toolbar: function () { return toolbar('<h3 style="font-size:1rem">' + t('maintenance_log') + '</h3><div class="sp"></div><button class="rc-btn" id="rc-add">+ ' + t('new_maintenance') + '</button>'); },
+      render: function (rows) {
+        const tr = rows.map(function (m) {
+          return '<tr><td><b>' + esc(m.car ? L(m.car, 'name') : '—') + '</b><div class="muted" style="font-size:.76rem">' + esc(m.car ? (m.car.plate_number || '') : '') + '</div></td>' +
+            '<td>' + t('svc_' + (m.type || 'service')) + '<div class="muted" style="font-size:.78rem">' + esc(m.title || '') + '</div></td>' +
+            '<td>' + RC.money(m.cost) + '</td>' +
+            '<td>' + (m.performed_at ? RC.date(m.performed_at) : '—') + '</td>' +
+            '<td>' + (m.next_due_date ? RC.date(m.next_due_date) : '—') + '</td>' +
+            '<td class="rc-actions"><button class="rc-ic-btn" data-edit="' + m.id + '">' + RC.icon('edit', 16) + '</button> <button class="rc-ic-btn danger" data-del="' + m.id + '">' + RC.icon('trash', 16) + '</button></td></tr>';
+        }).join('');
+        return tableWrap([{ raw: t('car') || 'السيارة' }, { raw: t('type') }, { raw: t('cost') }, { raw: t('performed_at') }, { raw: t('next_due_date') }, 'actions'], tr);
+      },
+      bind: function (rows, reload) {
+        document.querySelectorAll('[data-edit]').forEach(function (b) { b.onclick = function () { mForm(rows.find(function (x) { return x.id == b.dataset.edit; }), reload); }; });
+        document.querySelectorAll('[data-del]').forEach(function (b) { b.onclick = async function () { if (await RC.confirm(t('confirm_delete'))) { await RC.api('DELETE', '/admin/maintenance/' + b.dataset.del); RC.toast(t('deleted')); reload(); } }; });
+      },
+      form: function (_, reload) { mForm(null, reload); },
+    });
+    function mForm(m, reload) {
+      m = m || {};
+      const body = '<form class="rc-form" id="mtf">' +
+        '<div class="row">' + field(t('car') || 'السيارة', select('car_id', carOpts(CARS), m.car_id)) + field(t('type'), select('type', MTYPES.map(function (x) { return { v: x[0], l: t(x[1]) }; }), m.type || 'service')) + '</div>' +
+        field(t('svc_title'), input('title', m.title)) +
+        '<div class="row">' + field(t('cost'), input('cost', m.cost, 'number')) + field(t('odometer'), input('odometer', m.odometer, 'number')) + '</div>' +
+        '<div class="row">' + field(t('performed_at'), input('performed_at', (m.performed_at || '').slice(0, 10), 'date')) + field(t('vendor'), input('vendor', m.vendor)) + '</div>' +
+        '<div class="row">' + field(t('next_due_date'), input('next_due_date', (m.next_due_date || '').slice(0, 10), 'date')) + field(t('next_due_odometer'), input('next_due_odometer', m.next_due_odometer, 'number')) + '</div>' +
+        '</form>';
+      const w = RC.modal(m.id ? t('edit') : t('new_maintenance'), body, '<button class="rc-btn ghost" onclick="RC.closeModal()">' + t('cancel') + '</button><button class="rc-btn" id="mts">' + t('save') + '</button>');
+      $('#mts', w).onclick = async function () { const f = $('#mtf', w); const d = formData(f); Object.keys(d).forEach(function (k) { if (d[k] === '') delete d[k]; }); try { await RC.api(m.id ? 'PATCH' : 'POST', m.id ? '/admin/maintenance/' + m.id : '/admin/maintenance', d); RC.closeModal(); RC.toast(t('saved')); reload(); } catch (e) { err(e, f); } };
+    }
+  };
+
+  /* ---- Damages & claims ---- */
+  const SEVS = [['minor', 'sev_minor'], ['moderate', 'sev_moderate'], ['major', 'sev_major']];
+  const DSTA = [['open', 'st_open'], ['in_repair', 'st_in_repair'], ['resolved', 'st_resolved']];
+  PAGES.damages = function () {
+    let CARS = [];
+    allCars().then(function (c) { CARS = c; });
+    crudList({
+      endpoint: '/admin/damages',
+      toolbar: function () { return toolbar('<h3 style="font-size:1rem">' + t('damages') + '</h3><div class="sp"></div><button class="rc-btn" id="rc-add">+ ' + t('new_damage') + '</button>'); },
+      render: function (rows) {
+        const sevColor = { minor: 'var(--blue)', moderate: 'var(--orange)', major: 'var(--red)' };
+        const tr = rows.map(function (dm) {
+          return '<tr><td><b>' + esc(dm.car ? L(dm.car, 'name') : '—') + '</b><div class="muted" style="font-size:.76rem">' + esc(dm.car ? (dm.car.plate_number || '') : '') + '</div></td>' +
+            '<td>' + esc(dm.title || '') + (dm.insurance_claim ? ' <span class="rc-badge" style="background:rgba(var(--accent-rgb),.14);color:var(--amber)">' + t('insurance_claim') + '</span>' : '') + '</td>' +
+            '<td><span class="rc-badge" style="background:' + (sevColor[dm.severity] || 'var(--muted)') + '22;color:' + (sevColor[dm.severity] || 'var(--muted)') + '">' + t('sev_' + (dm.severity || 'minor')) + '</span></td>' +
+            '<td>' + RC.money(dm.repair_cost && +dm.repair_cost > 0 ? dm.repair_cost : dm.cost_estimate) + '</td>' +
+            '<td>' + t('st_' + (dm.status || 'open')) + '</td>' +
+            '<td class="rc-actions">' + (dm.status !== 'resolved' ? '<button class="rc-ic-btn" data-res="' + dm.id + '" title="' + t('mark_resolved') + '">' + RC.icon('check', 16) + '</button> ' : '') + '<button class="rc-ic-btn" data-edit="' + dm.id + '">' + RC.icon('edit', 16) + '</button> <button class="rc-ic-btn danger" data-del="' + dm.id + '">' + RC.icon('trash', 16) + '</button></td></tr>';
+        }).join('');
+        return tableWrap([{ raw: t('car') || 'السيارة' }, { raw: t('title') || 'الوصف' }, { raw: t('severity') }, { raw: t('cost') }, { raw: t('status') }, 'actions'], tr);
+      },
+      bind: function (rows, reload) {
+        document.querySelectorAll('[data-edit]').forEach(function (b) { b.onclick = function () { dForm(rows.find(function (x) { return x.id == b.dataset.edit; }), reload); }; });
+        document.querySelectorAll('[data-del]').forEach(function (b) { b.onclick = async function () { if (await RC.confirm(t('confirm_delete'))) { await RC.api('DELETE', '/admin/damages/' + b.dataset.del); RC.toast(t('deleted')); reload(); } }; });
+        document.querySelectorAll('[data-res]').forEach(function (b) { b.onclick = async function () { const fd = new FormData(); fd.append('_resolve', '1'); await RC.apiForm('POST', '/admin/damages/' + b.dataset.res, fd); RC.toast(t('saved')); reload(); }; });
+      },
+      form: function (_, reload) { dForm(null, reload); },
+    });
+    function dForm(dm, reload) {
+      dm = dm || {};
+      const body = '<form class="rc-form" id="dmf">' +
+        '<div class="row">' + field(t('car') || 'السيارة', select('car_id', carOpts(CARS), dm.car_id)) + field(t('severity'), select('severity', SEVS.map(function (x) { return { v: x[0], l: t(x[1]) }; }), dm.severity || 'minor')) + '</div>' +
+        field(t('svc_title'), input('title', dm.title)) +
+        field(t('details'), textarea('description', dm.description)) +
+        '<div class="row">' + field(t('cost_estimate'), input('cost_estimate', dm.cost_estimate, 'number')) + field(t('repair_cost'), input('repair_cost', dm.repair_cost, 'number')) + '</div>' +
+        '<div class="row">' + field(t('occurred_at'), input('occurred_at', (dm.occurred_at || '').slice(0, 10), 'date')) + field(t('status'), select('status', DSTA.map(function (x) { return { v: x[0], l: t(x[1]) }; }), dm.status || 'open')) + '</div>' +
+        '<label class="chk"><input type="checkbox" name="insurance_claim" ' + (dm.insurance_claim ? 'checked' : '') + '> ' + t('insurance_claim') + '</label>' +
+        '<div class="row">' + field(t('claim_ref'), input('claim_ref', dm.claim_ref)) + field(t('claim_amount'), input('claim_amount', dm.claim_amount, 'number')) + '</div>' +
+        field(t('photos'), '<input class="rc-input" type="file" name="images[]" accept="image/*" multiple>') +
+        '</form>';
+      const w = RC.modal(dm.id ? t('edit') : t('new_damage'), body, '<button class="rc-btn ghost" onclick="RC.closeModal()">' + t('cancel') + '</button><button class="rc-btn" id="dms">' + t('save') + '</button>');
+      $('#dms', w).onclick = async function () {
+        const f = $('#dmf', w); const fd = new FormData(f);
+        fd.set('insurance_claim', f.insurance_claim.checked ? '1' : '0');
+        // strip empty file input so validation doesn't choke
+        if (!f['images[]'].files.length) fd.delete('images[]');
+        try { await RC.apiForm('POST', dm.id ? '/admin/damages/' + dm.id : '/admin/damages', fd); RC.closeModal(); RC.toast(t('saved')); reload(); } catch (e) { err(e, f); }
+      };
     }
   };
 

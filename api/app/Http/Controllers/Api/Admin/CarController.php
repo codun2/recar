@@ -28,7 +28,7 @@ class CarController extends Controller
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->category_id, fn ($q, $c) => $q->where('category_id', $c))
             ->orderByDesc('id')
-            ->paginate(15);
+            ->paginate(min((int) ($request->per_page ?: 15), 1000));
 
         return response()->json($cars);
     }

@@ -60,6 +60,11 @@
       advanced_custom: 'تخصيص متقدّم', advanced_hint: 'لمساً نهائياً: عدّل الألوان والزوايا والخط، أو أضف CSS خاص. اتركه فارغاً لاستخدام القالب كما هو.',
       accent_color: 'اللون الأساسي', accent_dark_color: 'درجة أغمق', sidebar_color: 'لون الشريط الجانبي', on_accent_color: 'لون النص فوق اللون الأساسي',
       corner_radius: 'انحناء الزوايا', font_family: 'الخط', custom_css: 'CSS مخصّص', reset_custom: 'تصفير التخصيص', font_default: 'الافتراضي (حسب القالب)',
+      branches: 'الفروع', new_branch: 'فرع جديد', branch: 'الفرع', primary_branch: 'رئيسي', current_branch: 'الفرع الحالي', transfer: 'نقل', transfer_car: 'نقل السيارة', transfer_to: 'نقل إلى فرع', transfer_done: 'تم النقل', no_branch: 'بدون فرع',
+      maintenance_log: 'الصيانة', new_maintenance: 'سجلّ صيانة', type: 'النوع', svc_service: 'صيانة دورية', svc_oil: 'تغيير زيت', svc_repair: 'إصلاح', svc_inspection: 'فحص', svc_tires: 'إطارات', svc_battery: 'بطارية', svc_insurance: 'تأمين', svc_other: 'أخرى',
+      cost: 'التكلفة', odometer: 'قراءة العدّاد', vendor: 'الورشة/المزوّد', performed_at: 'تاريخ التنفيذ', performed_by: 'نفّذها', next_due_date: 'الاستحقاق القادم', next_due_odometer: 'العدّاد القادم', scheduled: 'مجدولة', done_m: 'منجزة', service_log: 'سجلّ الصيانة',
+      damages: 'الأضرار والمطالبات', new_damage: 'تسجيل ضرر', severity: 'الخطورة', sev_minor: 'طفيف', sev_moderate: 'متوسّط', sev_major: 'كبير', st_open: 'مفتوح', st_in_repair: 'قيد الإصلاح', st_resolved: 'مُسوّى', cost_estimate: 'تقدير التكلفة', repair_cost: 'تكلفة الإصلاح', reported_by: 'المُبلِّغ', occurred_at: 'تاريخ الحدوث', insurance_claim: 'مطالبة تأمين', claim_ref: 'رقم المطالبة', claim_amount: 'مبلغ المطالبة', mark_resolved: 'تحديد كمُسوّى', photos: 'صور', svc_title: 'العنوان', details: 'تفاصيل',
+      insurance_expiry: 'انتهاء التأمين', registration_expiry: 'انتهاء الاستمارة', inspection_expiry: 'انتهاء الفحص الدوري', next_service: 'الصيانة القادمة', fleet_reminders: 'تنبيهات الأسطول', overdue: 'متأخّر', no_reminders: 'لا تنبيهات قريبة', fleet_compliance: 'تواريخ الأسطول (تأمين/استمارة/فحص)',
     },
     en: {
       app: 'Sayyar', dashboard: 'Dashboard', cars: 'Cars', categories: 'Categories',
@@ -113,6 +118,11 @@
       advanced_custom: 'Advanced customization', advanced_hint: 'The finishing touch: tweak colors, corners and font, or add custom CSS. Leave empty to use the template as-is.',
       accent_color: 'Accent color', accent_dark_color: 'Darker shade', sidebar_color: 'Sidebar color', on_accent_color: 'Text on accent',
       corner_radius: 'Corner radius', font_family: 'Font', custom_css: 'Custom CSS', reset_custom: 'Reset customization', font_default: 'Default (from template)',
+      branches: 'Branches', new_branch: 'New branch', branch: 'Branch', primary_branch: 'Primary', current_branch: 'Current branch', transfer: 'Transfer', transfer_car: 'Transfer car', transfer_to: 'Transfer to branch', transfer_done: 'Transferred', no_branch: 'No branch',
+      maintenance_log: 'Maintenance', new_maintenance: 'Service entry', type: 'Type', svc_service: 'Service', svc_oil: 'Oil change', svc_repair: 'Repair', svc_inspection: 'Inspection', svc_tires: 'Tires', svc_battery: 'Battery', svc_insurance: 'Insurance', svc_other: 'Other',
+      cost: 'Cost', odometer: 'Odometer', vendor: 'Vendor/garage', performed_at: 'Date', performed_by: 'Performed by', next_due_date: 'Next due', next_due_odometer: 'Next odometer', scheduled: 'Scheduled', done_m: 'Done', service_log: 'Service log',
+      damages: 'Damages & claims', new_damage: 'Report damage', severity: 'Severity', sev_minor: 'Minor', sev_moderate: 'Moderate', sev_major: 'Major', st_open: 'Open', st_in_repair: 'In repair', st_resolved: 'Resolved', cost_estimate: 'Cost estimate', repair_cost: 'Repair cost', reported_by: 'Reported by', occurred_at: 'Occurred on', insurance_claim: 'Insurance claim', claim_ref: 'Claim ref', claim_amount: 'Claim amount', mark_resolved: 'Mark resolved', photos: 'Photos', svc_title: 'Title', details: 'Details',
+      insurance_expiry: 'Insurance expiry', registration_expiry: 'Registration expiry', inspection_expiry: 'Inspection expiry', next_service: 'Next service', fleet_reminders: 'Fleet reminders', overdue: 'Overdue', no_reminders: 'No upcoming reminders', fleet_compliance: 'Fleet dates (insurance/registration/inspection)',
     },
   };
 
@@ -432,6 +442,12 @@
     history: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
     moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+    wrench: '<path d="M14.6 6.1a4 4 0 0 0-5.2 5l-5.6 5.6a1.5 1.5 0 0 0 0 2.1l1.4 1.4a1.5 1.5 0 0 0 2.1 0l5.6-5.6a4 4 0 0 0 5-5.2l-2.6 2.6-2.1-.5-.5-2.1z"/>',
+    branch: '<path d="M12 21s-6-5.3-6-10a6 6 0 1 1 12 0c0 4.7-6 10-6 10z"/><circle cx="12" cy="11" r="2.3"/>',
+    damage: '<path d="M12 3l7 3v5c0 4.6-3.1 7.7-7 9-3.9-1.3-7-4.4-7-9V6z"/><path d="M12 8.2v4.2M12 15.4v.2"/>',
+    transfer: '<path d="M4 8h13l-3.2-3.2"/><path d="M20 16H7l3.2 3.2"/>',
+    search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+    whatsapp: '<path d="M4 20.5l1.4-4.1a7.5 7.5 0 1 1 2.7 2.7z"/><path d="M9 9.2c.2-.6.5-.6.9-.6.3 0 .6 0 .8.5l.5 1.1c.1.3 0 .5-.1.7l-.4.5c-.1.2-.2.3 0 .6a5 5 0 0 0 2.2 2c.3.1.4.1.6-.1l.5-.6c.2-.2.4-.2.6-.1l1.1.6c.4.2.5.4.5.7 0 .5-.5 1.2-1 1.3-.5.2-1.2.2-3-.6a7.4 7.4 0 0 1-3.3-3.2c-.6-1.2-.6-1.8-.4-2.3z"/>',
   };
   function icon(name, size) {
     const s = size || 20;
