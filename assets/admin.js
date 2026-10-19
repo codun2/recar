@@ -33,6 +33,7 @@
     renderNav();
     paintUser();
     RC.initPalette();
+    if (ME && ME.is_demo) showDemoBanner();
     loadBadges();
     const page = document.body.dataset.page;
     if (PAGES[page]) PAGES[page]();
@@ -63,6 +64,16 @@
       return '<a href="' + n.href + '" class="' + (n.key === page ? 'on' : '') + '" data-key="' + n.key + '"><span class="ic">' + RC.icon(n.ic) + '</span><span data-i18n="' + n.key + '"></span>' + (n.key === 'notifications' ? '<span class="count" id="rc-badge" style="display:none">0</span>' : '') + '</a>';
     }).join('');
     RC.applyLang(RC.lang());
+  }
+
+  function showDemoBanner() {
+    if (document.querySelector('.rc-demobar')) return;
+    const main = document.querySelector('.rc-main');
+    const bar = document.createElement('div');
+    bar.className = 'rc-demobar';
+    bar.innerHTML = '<span>' + RC.icon('eye', 15) + ' ' + t('demo_banner') + '</span><a href="#" id="exitdemo">' + t('exit_demo') + ' ›</a>';
+    main.insertBefore(bar, main.firstChild);
+    document.getElementById('exitdemo').onclick = function (e) { e.preventDefault(); RC.token.clear(); location.href = '/admin/login.html'; };
   }
 
   function paintUser() {

@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'perm'    => \App\Http\Middleware\EnsurePermission::class,
             'company' => \App\Http\Middleware\SetCompanyContext::class,
             'super'   => \App\Http\Middleware\EnsureSuperAdmin::class,
+            'notdemo' => \App\Http\Middleware\EnsureNotDemo::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

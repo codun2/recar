@@ -17,6 +17,8 @@
         <div class="rc-field"><label data-i18n="password"></label><input class="rc-input" name="password" type="password" required></div>
         <button class="rc-btn" type="submit" data-i18n="signin"></button>
       </form>
+      <div class="rc-auth-or"><span data-i18n="or"></span></div>
+      <button class="rc-btn ghost" id="demobtn" style="width:100%;justify-content:center" data-i18n="explore_demo"></button>
       <div class="rc-auth-links"><a href="/" data-i18n="back"></a></div>
     </div>
   </div>
@@ -30,6 +32,14 @@
       const f = e.target, d = { email: f.email.value, password: f.password.value };
       try {
         const r = await RC.api('POST', '/admin/login', d);
+        RC.token.set(r.token);
+        if (r.company) RC.setCurrency(r.company.currency);
+        location.href = '/admin/index.html';
+      } catch (err) { RC.toast(err.message || 'خطأ', 'err'); }
+    });
+    document.getElementById('demobtn').addEventListener('click', async function () {
+      try {
+        const r = await RC.api('POST', '/admin/demo-login');
         RC.token.set(r.token);
         if (r.company) RC.setCurrency(r.company.currency);
         location.href = '/admin/index.html';

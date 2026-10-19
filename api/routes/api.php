@@ -71,8 +71,10 @@ Route::prefix('customer')->group(function () {
 */
 Route::prefix('admin')->group(function () {
     Route::post('login', [AdminAuthController::class, 'login']);
+    Route::post('demo-login', [AdminAuthController::class, 'demoLogin']);
+    Route::post('auth/google', [AdminAuthController::class, 'google']);
 
-    Route::middleware(['auth:sanctum', 'staff', 'company'])->group(function () {
+    Route::middleware(['auth:sanctum', 'staff', 'company', 'notdemo'])->group(function () {
         Route::get('me', [AdminAuthController::class, 'me']);
         Route::get('badges', [AdminAuthController::class, 'badges']);
         Route::get('search', [SearchController::class, 'index']);

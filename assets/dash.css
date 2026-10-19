@@ -425,3 +425,11 @@ table.rc-table{width:100%;border-collapse:collapse;font-size:.9rem}
 .rc-cmdk-it .tx b{font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rc-cmdk-it .tx span{font-size:.76rem;color:var(--muted)}
 .rc-cmdk-empty{padding:28px;text-align:center;color:var(--muted)}
+
+/* ---- demo banner + auth separator ---- */
+.rc-demobar{display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(var(--accent-rgb),.12);color:var(--text);border-bottom:1px solid var(--line);padding:8px 22px;font-size:.84rem;font-weight:700}
+.rc-demobar span{display:inline-flex;align-items:center;gap:7px}
+.rc-demobar svg{color:var(--amber)}
+.rc-demobar a{color:var(--amber);font-weight:800;white-space:nowrap}
+.rc-auth-or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.8rem;margin:14px 0}
+.rc-auth-or::before,.rc-auth-or::after{content:"";flex:1;height:1px;background:var(--line)}
