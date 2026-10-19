@@ -582,12 +582,13 @@
       endpoint: '/admin/customers',
       toolbar: function () { return toolbar('<input class="rc-input rc-search" id="rc-search" data-i18n-ph="search"><div class="sp"></div><button class="rc-btn" id="rc-add">+ ' + t('new_customer') + '</button>'); },
       render: function (cs) {
-        const rows = cs.map(function (c) { return '<tr><td><b>' + esc(c.name) + '</b></td><td>' + esc(c.phone || '—') + '</td><td>' + esc(c.national_id || '—') + '</td><td>' + (c.bookings_count || 0) + '</td><td><button class="rc-ic-btn" data-edit="' + c.id + '">'+RC.icon('edit',16)+'</button> <button class="rc-ic-btn danger" data-del="' + c.id + '">'+RC.icon('trash',16)+'</button></td></tr>'; }).join('');
+        const rows = cs.map(function (c) { return '<tr><td><b>' + esc(c.name) + '</b></td><td>' + esc(c.phone || '—') + '</td><td>' + esc(c.national_id || '—') + '</td><td>' + (c.bookings_count || 0) + '</td><td class="rc-actions">' + (c.phone ? '<button class="rc-ic-btn" data-wa="' + c.id + '" title="' + t('whatsapp') + '" style="color:#25d366">' + RC.icon('whatsapp', 16) + '</button> ' : '') + '<button class="rc-ic-btn" data-edit="' + c.id + '">'+RC.icon('edit',16)+'</button> <button class="rc-ic-btn danger" data-del="' + c.id + '">'+RC.icon('trash',16)+'</button></td></tr>'; }).join('');
         return tableWrap(['name', 'phone', 'national_id', 'bookings', 'actions'], rows);
       },
       bind: function (cs, reload) {
         document.querySelectorAll('[data-edit]').forEach(function (b) { b.onclick = function () { custForm(cs.find(function (c) { return c.id == b.dataset.edit; }), reload); }; });
         document.querySelectorAll('[data-del]').forEach(function (b) { b.onclick = async function () { if (await RC.confirm(t('confirm_delete'))) { await RC.api('DELETE', '/admin/customers/' + b.dataset.del); RC.toast(t('deleted')); reload(); } }; });
+        document.querySelectorAll('[data-wa]').forEach(function (b) { b.onclick = function () { const c = cs.find(function (x) { return x.id == b.dataset.wa; }); if (c) RC.wa(c.phone, 'مرحباً ' + (c.name || '') + (COMPANY ? ' - ' + COMPANY.name : '')); }; });
       },
       form: function (_, reload) { custForm(null, reload); },
     });
@@ -633,10 +634,18 @@
         '</div>' +
         (b.receipt ? '<div style="margin-bottom:12px"><b>' + t('receipt') + ':</b><br><a href="' + esc(b.receipt) + '" target="_blank"><img src="' + esc(b.receipt) + '" class="receipt-thumb" style="max-height:220px"></a></div>' : '');
       const body = info + '<form class="rc-form" id="sf">' + field(t('status'), select('status', ['pending', 'confirmed', 'active', 'completed', 'cancelled'].map(function (s) { return { v: s, l: t(s) }; }), b.status)) + '</form>';
-      const foot = '<button class="rc-btn ghost" id="mkinv">' + RC.icon('invoices', 16) + ' ' + t('create_invoice') + '</button><button class="rc-btn" id="ss">' + t('save') + '</button>';
+      const canWa = b.customer && b.customer.phone;
+      const foot = (canWa ? '<button class="rc-btn ghost" id="wabtn" style="color:#25d366">' + RC.icon('whatsapp', 16) + ' ' + t('whatsapp') + '</button>' : '') + '<button class="rc-btn ghost" id="mkinv">' + RC.icon('invoices', 16) + ' ' + t('create_invoice') + '</button><button class="rc-btn" id="ss">' + t('save') + '</button>';
       const w = RC.modal(b.reference || '#' + b.id, body, foot);
       $('#ss', w).onclick = async function () { try { await RC.api('PATCH', '/admin/bookings/' + b.id + '/status', { status: $('#sf', w).status.value }); RC.closeModal(); RC.toast(t('saved')); reload(); } catch (e) { err(e); } };
       $('#mkinv', w).onclick = function () { RC.closeModal(); location.href = 'invoices.html?booking=' + b.id; };
+      if (canWa) $('#wabtn', w).onclick = function () {
+        const msg = 'مرحباً ' + (b.customer.name || '') + '، تم تأكيد حجزك' + (COMPANY ? ' لدى ' + COMPANY.name : '') + '.\n' +
+          'السيارة: ' + (b.car ? L(b.car, 'name') : '') + '\n' +
+          'الفترة: ' + RC.date(b.start_date) + ' → ' + RC.date(b.end_date) + ' (' + b.days + ' ' + t('days') + ')\n' +
+          'الإجمالي: ' + RC.money(b.total) + ' · المتبقّي: ' + RC.money(remaining);
+        RC.wa(b.customer.phone, msg);
+      };
     }
     async function bookingForm(reload) {
       const cs = await RC.api('GET', '/admin/customers?page=1');
