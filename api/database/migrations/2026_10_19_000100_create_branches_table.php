@@ -1,0 +1,28 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('branches', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('company_id')->index();
+            $table->string('name');
+            $table->string('phone')->nullable();
+            $table->string('city')->nullable();
+            $table->string('address')->nullable();
+            $table->boolean('is_primary')->default(false);
+            $table->integer('sort')->default(0);
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('branches');
+    }
+};

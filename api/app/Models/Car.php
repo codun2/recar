@@ -10,10 +10,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /** A rentable vehicle, scoped to a company. */
 #[Fillable([
-    'company_id', 'category_id', 'name_ar', 'name_en', 'make', 'model', 'year',
+    'company_id', 'branch_id', 'category_id', 'name_ar', 'name_en', 'make', 'model', 'year',
     'plate_number', 'color', 'transmission', 'fuel', 'seats', 'doors',
     'daily_price', 'offer_price', 'offer_label', 'weekly_price', 'monthly_price', 'deposit',
     'mileage', 'status', 'featured', 'image', 'description_ar', 'description_en',
+    'insurance_expiry', 'registration_expiry', 'inspection_expiry',
+    'next_service_date', 'next_service_odometer',
 ])]
 class Car extends Model
 {
@@ -32,6 +34,11 @@ class Car extends Model
             'seats'         => 'integer',
             'doors'         => 'integer',
             'mileage'       => 'integer',
+            'next_service_odometer' => 'integer',
+            'insurance_expiry'      => 'date',
+            'registration_expiry'   => 'date',
+            'inspection_expiry'     => 'date',
+            'next_service_date'     => 'date',
         ];
     }
 
@@ -44,6 +51,26 @@ class Car extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(CarCategory::class, 'category_id');
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function maintenance(): HasMany
+    {
+        return $this->hasMany(MaintenanceRecord::class)->orderByDesc('performed_at')->orderByDesc('id');
+    }
+
+    public function damages(): HasMany
+    {
+        return $this->hasMany(Damage::class)->orderByDesc('id');
+    }
+
+    public function transfers(): HasMany
+    {
+        return $this->hasMany(CarTransfer::class)->orderByDesc('id');
     }
 
     public function images(): HasMany

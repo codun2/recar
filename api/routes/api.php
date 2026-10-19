@@ -5,11 +5,14 @@ use App\Http\Controllers\Api\Account\CarController as AccountCarController;
 use App\Http\Controllers\Api\Account\InvoiceController as AccountInvoiceController;
 use App\Http\Controllers\Api\Admin\AccountsController;
 use App\Http\Controllers\Api\Admin\BookingController;
+use App\Http\Controllers\Api\Admin\BranchController;
 use App\Http\Controllers\Api\Admin\CarController;
 use App\Http\Controllers\Api\Admin\CategoryController;
 use App\Http\Controllers\Api\Admin\CustomerController;
+use App\Http\Controllers\Api\Admin\DamageController;
 use App\Http\Controllers\Api\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Api\Admin\InvoiceController;
+use App\Http\Controllers\Api\Admin\MaintenanceController;
 use App\Http\Controllers\Api\Admin\NotificationController;
 use App\Http\Controllers\Api\Admin\PaymentController;
 use App\Http\Controllers\Api\Admin\SettingController;
@@ -90,6 +93,27 @@ Route::prefix('admin')->group(function () {
             Route::post('cars/{car}/images', [CarController::class, 'uploadImages']);
             Route::post('cars/{car}/images/{image}/main', [CarController::class, 'setMainImage']);
             Route::delete('cars/{car}/images/{image}', [CarController::class, 'destroyImage']);
+
+            // Branches + inter-branch car transfer
+            Route::get('branches', [BranchController::class, 'index']);
+            Route::post('branches', [BranchController::class, 'store']);
+            Route::patch('branches/{branch}', [BranchController::class, 'update']);
+            Route::delete('branches/{branch}', [BranchController::class, 'destroy']);
+            Route::post('cars/{car}/transfer', [CarController::class, 'transfer']);
+
+            // Maintenance / service log + fleet reminders
+            Route::get('maintenance/reminders', [MaintenanceController::class, 'reminders']);
+            Route::get('maintenance', [MaintenanceController::class, 'index']);
+            Route::post('maintenance', [MaintenanceController::class, 'store']);
+            Route::patch('maintenance/{maintenance}', [MaintenanceController::class, 'update']);
+            Route::delete('maintenance/{maintenance}', [MaintenanceController::class, 'destroy']);
+
+            // Damages & claims
+            Route::get('damages', [DamageController::class, 'index']);
+            Route::post('damages', [DamageController::class, 'store']);
+            Route::post('damages/{damage}', [DamageController::class, 'update']); // multipart (images)
+            Route::patch('damages/{damage}', [DamageController::class, 'update']);
+            Route::delete('damages/{damage}', [DamageController::class, 'destroy']);
         });
 
         // Categories

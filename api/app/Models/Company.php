@@ -50,6 +50,11 @@ class Company extends Model
         return $this->hasMany(Car::class);
     }
 
+    public function branches(): HasMany
+    {
+        return $this->hasMany(Branch::class);
+    }
+
     public function categories(): HasMany
     {
         return $this->hasMany(CarCategory::class);

@@ -18,8 +18,9 @@ class CarController extends Controller
     public function index(Request $request)
     {
         $cars = Car::query()
-            ->with('category:id,name_ar,name_en')
+            ->with(['category:id,name_ar,name_en', 'branch:id,name'])
             ->withCount('images')
+            ->when($request->branch_id, fn ($q, $b) => $q->where('branch_id', $b))
             ->when($request->q, fn ($q, $term) => $q->where(fn ($w) => $w
                 ->where('name_ar', 'like', "%{$term}%")
                 ->orWhere('name_en', 'like', "%{$term}%")
@@ -34,7 +35,7 @@ class CarController extends Controller
 
     public function show(Car $car)
     {
-        $car->load(['category:id,name_ar,name_en', 'images']);
+        $car->load(['category:id,name_ar,name_en', 'images', 'branch:id,name']);
 
         // Active rental (if the car is currently handed out) — for the handover panel.
         $active = $car->bookings()
@@ -201,6 +202,7 @@ class CarController extends Controller
 
         return $request->validate([
             'category_id'    => ['nullable', 'integer', 'exists:car_categories,id'],
+            'branch_id'      => ['nullable', 'integer', 'exists:branches,id'],
             'name_ar'        => [$req, 'string', 'max:160'],
             'name_en'        => [$req, 'string', 'max:160'],
             'make'           => ['nullable', 'string', 'max:80'],
@@ -223,6 +225,33 @@ class CarController extends Controller
             'featured'       => ['nullable', 'boolean'],
             'description_ar' => ['nullable', 'string'],
             'description_en' => ['nullable', 'string'],
+            'insurance_expiry'      => ['nullable', 'date'],
+            'registration_expiry'   => ['nullable', 'date'],
+            'inspection_expiry'     => ['nullable', 'date'],
+            'next_service_date'     => ['nullable', 'date'],
+            'next_service_odometer' => ['nullable', 'integer', 'min:0'],
         ]);
+    }
+
+    /** Move a car to another branch, recording the transfer in its log. */
+    public function transfer(Request $request, Car $car)
+    {
+        $data = $request->validate([
+            'to_branch_id'   => ['required', 'integer', 'exists:branches,id'],
+            'transferred_by' => ['nullable', 'string', 'max:120'],
+            'note'           => ['nullable', 'string', 'max:255'],
+        ]);
+
+        \App\Models\CarTransfer::create([
+            'car_id'         => $car->id,
+            'from_branch_id' => $car->branch_id,
+            'to_branch_id'   => $data['to_branch_id'],
+            'transferred_by' => $data['transferred_by'] ?? null,
+            'note'           => $data['note'] ?? null,
+        ]);
+
+        $car->update(['branch_id' => $data['to_branch_id']]);
+
+        return response()->json($car->fresh()->load('branch:id,name'));
     }
 }
