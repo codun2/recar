@@ -108,24 +108,40 @@
     const d = await RC.api('GET', '/admin/dashboard');
     const tile = function (ic, cls, v, k) { return '<div class="rc-tile"><div class="ic ' + cls + '">' + ic + '</div><div><div class="v">' + v + '</div><div class="k">' + t(k) + '</div></div></div>'; };
     const maxRev = Math.max.apply(null, d.revenue_series.map(function (s) { return s.value; }).concat([1]));
+    const fleet = d.fleet || { utilization: 0, in_use: 0, total: 0, reminders_count: 0, damages_open: 0 };
+    const wk = d.week || { collected: 0, prev_collected: 0, delivered: 0, returned: 0 };
+    const linkTile = function (ic, cls, v, k, href) { return '<a href="' + href + '" style="text-decoration:none">' + tile(ic, cls, v, k) + '</a>'; };
     view().innerHTML =
-      '<div class="rc-grid tiles" style="margin-bottom:18px">' +
+      '<div class="rc-grid tiles" style="margin-bottom:16px">' +
       tile(RC.icon('cars'), 'navy', d.cars.total, 'cars') +
-      tile(RC.icon('check'), 'green', d.cars.available, 'available') +
-      tile(RC.icon('bookings'), 'amber', d.bookings.active, 'active') +
+      '<div class="rc-tile"><div class="ic amber">' + RC.icon('bookings') + '</div><div style="flex:1"><div class="v">' + fleet.utilization + '%</div><div class="k">' + t('utilization') + '</div><div class="rc-meter" style="margin-top:6px"><span style="width:' + fleet.utilization + '%"></span></div></div></div>' +
+      tile(RC.icon('bookings'), 'green', d.bookings.active, 'active') +
       tile(RC.icon('customers'), 'navy', d.customers, 'customers') +
-      tile(RC.icon('invoices'), 'red', d.invoices.unpaid, 'unpaid') +
-      tile(RC.icon('wallet'), 'green', RC.money(d.revenue.month), 'monthly_revenue') +
+      linkTile(RC.icon('wrench'), 'amber', fleet.reminders_count, 'fleet_reminders', 'maintenance.html') +
+      linkTile(RC.icon('damage'), 'red', fleet.damages_open, 'damages', 'damages.html') +
       '</div>' +
-      '<div class="rc-grid" style="grid-template-columns:1.4fr 1fr">' +
+      // weekly summary strip
+      '<div class="rc-card" style="margin-bottom:16px"><h3>' + RC.icon('calendar', 16) + ' ' + t('this_week') + '</h3><div class="rc-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">' +
+      '<div><div class="v" style="font-size:1.4rem;font-weight:900">' + RC.money(wk.collected) + '</div><div class="k" style="color:var(--muted);font-size:.8rem">' + t('collected') + ' · <span style="color:' + (wk.collected >= wk.prev_collected ? 'var(--green)' : 'var(--red)') + '">' + (wk.prev_collected > 0 ? (wk.collected >= wk.prev_collected ? '▲' : '▼') + ' ' : '') + t('vs_last_week') + '</span></div></div>' +
+      '<div><div class="v" style="font-size:1.4rem;font-weight:900">' + wk.delivered + '</div><div class="k" style="color:var(--muted);font-size:.8rem">' + t('delivered_count') + '</div></div>' +
+      '<div><div class="v" style="font-size:1.4rem;font-weight:900">' + wk.returned + '</div><div class="k" style="color:var(--muted);font-size:.8rem">' + t('returned_count') + '</div></div>' +
+      '<div><div class="v" style="font-size:1.4rem;font-weight:900">' + RC.money(d.revenue.month) + '</div><div class="k" style="color:var(--muted);font-size:.8rem">' + t('monthly_revenue') + '</div></div>' +
+      '</div></div>' +
+      '<div class="rc-grid" style="grid-template-columns:1.4fr 1fr;margin-bottom:16px">' +
       '<div class="rc-card"><h3>' + t('monthly_revenue') + '</h3><div class="rc-bars">' +
       d.revenue_series.map(function (s) { return '<div class="bar"><div class="fill" style="height:' + Math.round(s.value / maxRev * 100) + '%"></div><div class="lb">' + s.label.slice(5) + '</div></div>'; }).join('') +
+      '</div></div>' +
+      '<div class="rc-card"><h3>' + RC.icon('calendar', 16) + ' ' + t('upcoming_returns') + '</h3>' +
+      ((d.upcoming_returns || []).length ? d.upcoming_returns.map(function (b) {
+        const late = new Date(b.end_date) < new Date(new Date().toDateString());
+        return '<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line)"><div><b>' + esc(b.car ? L(b.car, 'name') : '') + '</b><div style="font-size:.78rem;color:var(--muted)">' + esc(b.customer ? b.customer.name : '') + ' · ' + esc(b.reference || '') + '</div></div><span style="font-size:.82rem;font-weight:700;color:' + (late ? 'var(--red)' : 'var(--amber)') + '">' + RC.date(b.end_date) + '</span></div>';
+      }).join('') : '<div class="rc-empty">' + t('no_data') + '</div>') +
       '</div></div>' +
       '<div class="rc-card"><h3>' + t('latest') + ' — ' + t('bookings') + '</h3>' +
       (d.latest_bookings.length ? d.latest_bookings.map(function (b) {
         return '<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line)"><div><b>' + esc(b.reference || '#' + b.id) + '</b><div style="font-size:.78rem;color:var(--muted)">' + esc(b.customer ? b.customer.name : '') + ' · ' + esc(b.car ? L(b.car, 'name') : '') + '</div></div>' + RC.badge(b.status) + '</div>';
       }).join('') : '<div class="rc-empty">' + t('no_data') + '</div>') +
-      '</div></div>';
+      '</div>';
   };
 
   /* ---- generic list loader ---- */

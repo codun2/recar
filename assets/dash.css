@@ -398,3 +398,6 @@ table.rc-table{width:100%;border-collapse:collapse;font-size:.9rem}
 
 .cf-sep{display:flex;align-items:center;gap:6px;font-weight:800;font-size:.85rem;color:var(--amber);margin:10px 0 2px;padding-top:10px;border-top:1px dashed var(--line)}
 .cf-sep svg{width:15px;height:15px}
+
+.rc-meter{height:6px;border-radius:4px;background:var(--surface-2);overflow:hidden}
+.rc-meter span{display:block;height:100%;background:linear-gradient(90deg,var(--amber),var(--amber-dark));border-radius:4px}
