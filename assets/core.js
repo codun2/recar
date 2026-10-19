@@ -45,7 +45,7 @@
       offer: 'عرض', offer_price: 'سعر العرض', offer_label: 'عنوان العرض', images: 'الصور', max_images: 'حتى 15 صورة',
       gallery: 'المعرض', main_image: 'الصورة الرئيسية', details: 'التفاصيل', view_details: 'عرض التفاصيل',
       accounts: 'المالية', financial: 'الوضع المالي', receivables: 'المستحقات', deposits_held: 'تأمينات محتجزة',
-      invoiced: 'إجمالي الفواتير', collected: 'المحصّل', by_method: 'حسب طريقة الدفع', outstanding: 'فواتير غير محصّلة',
+      invoiced: 'إجمالي الفواتير', collected: 'المحصّل', search_all: 'ابحث في كل شيء…', open_search: 'بحث', by_method: 'حسب طريقة الدفع', outstanding: 'فواتير غير محصّلة',
       delivery: 'توصيل', delivery_address: 'عنوان التوصيل', delivery_fee: 'رسوم التوصيل', request_delivery: 'طلب توصيل',
       receipt: 'الإيصال', upload_receipt: 'رفع الإيصال', pay: 'دفع', pay_now: 'ادفع الآن', pay_deposit: 'دفع دفعة',
       payment_details: 'بيانات الدفع', bank_name: 'اسم البنك', account_name: 'اسم الحساب', iban: 'الآيبان', stc_pay: 'STC Pay',
@@ -64,7 +64,7 @@
       maintenance_log: 'الصيانة', new_maintenance: 'سجلّ صيانة', type: 'النوع', svc_service: 'صيانة دورية', svc_oil: 'تغيير زيت', svc_repair: 'إصلاح', svc_inspection: 'فحص', svc_tires: 'إطارات', svc_battery: 'بطارية', svc_insurance: 'تأمين', svc_other: 'أخرى',
       cost: 'التكلفة', odometer: 'قراءة العدّاد', vendor: 'الورشة/المزوّد', performed_at: 'تاريخ التنفيذ', performed_by: 'نفّذها', next_due_date: 'الاستحقاق القادم', next_due_odometer: 'العدّاد القادم', scheduled: 'مجدولة', done_m: 'منجزة', service_log: 'سجلّ الصيانة',
       damages: 'الأضرار والمطالبات', new_damage: 'تسجيل ضرر', severity: 'الخطورة', sev_minor: 'طفيف', sev_moderate: 'متوسّط', sev_major: 'كبير', st_open: 'مفتوح', st_in_repair: 'قيد الإصلاح', st_resolved: 'مُسوّى', cost_estimate: 'تقدير التكلفة', repair_cost: 'تكلفة الإصلاح', reported_by: 'المُبلِّغ', occurred_at: 'تاريخ الحدوث', insurance_claim: 'مطالبة تأمين', claim_ref: 'رقم المطالبة', claim_amount: 'مبلغ المطالبة', mark_resolved: 'تحديد كمُسوّى', photos: 'صور', svc_title: 'العنوان', details: 'تفاصيل',
-      insurance_expiry: 'انتهاء التأمين', registration_expiry: 'انتهاء الاستمارة', inspection_expiry: 'انتهاء الفحص الدوري', next_service: 'الصيانة القادمة', fleet_reminders: 'تنبيهات الأسطول', overdue: 'متأخّر', no_reminders: 'لا تنبيهات قريبة', fleet_compliance: 'تواريخ الأسطول (تأمين/استمارة/فحص)', utilization: 'نسبة تشغيل الأسطول', this_week: 'هذا الأسبوع', delivered_count: 'سُلّمت', returned_count: 'أُرجعت', upcoming_returns: 'إرجاعات قادمة', vs_last_week: 'مقابل الأسبوع السابق', collected: 'المحصّل',
+      insurance_expiry: 'انتهاء التأمين', registration_expiry: 'انتهاء الاستمارة', inspection_expiry: 'انتهاء الفحص الدوري', next_service: 'الصيانة القادمة', fleet_reminders: 'تنبيهات الأسطول', overdue: 'متأخّر', no_reminders: 'لا تنبيهات قريبة', fleet_compliance: 'تواريخ الأسطول (تأمين/استمارة/فحص)', utilization: 'نسبة تشغيل الأسطول', this_week: 'هذا الأسبوع', delivered_count: 'سُلّمت', returned_count: 'أُرجعت', upcoming_returns: 'إرجاعات قادمة', vs_last_week: 'مقابل الأسبوع السابق', collected: 'المحصّل', search_all: 'ابحث في كل شيء…', open_search: 'بحث',
     },
     en: {
       app: 'Sayyar', dashboard: 'Dashboard', cars: 'Cars', categories: 'Categories',
@@ -103,7 +103,7 @@
       offer: 'Offer', offer_price: 'Offer price', offer_label: 'Offer label', images: 'Images', max_images: 'up to 15 images',
       gallery: 'Gallery', main_image: 'Main image', details: 'Details', view_details: 'View details',
       accounts: 'Finance', financial: 'Financial status', receivables: 'Receivables', deposits_held: 'Deposits held',
-      invoiced: 'Total invoiced', collected: 'Collected', by_method: 'By method', outstanding: 'Outstanding invoices',
+      invoiced: 'Total invoiced', collected: 'Collected', search_all: 'Search everything…', open_search: 'Search', by_method: 'By method', outstanding: 'Outstanding invoices',
       delivery: 'Delivery', delivery_address: 'Delivery address', delivery_fee: 'Delivery fee', request_delivery: 'Request delivery',
       receipt: 'Receipt', upload_receipt: 'Upload receipt', pay: 'Pay', pay_now: 'Pay now', pay_deposit: 'Pay deposit',
       payment_details: 'Payment details', bank_name: 'Bank name', account_name: 'Account name', iban: 'IBAN', stc_pay: 'STC Pay',
@@ -122,7 +122,7 @@
       maintenance_log: 'Maintenance', new_maintenance: 'Service entry', type: 'Type', svc_service: 'Service', svc_oil: 'Oil change', svc_repair: 'Repair', svc_inspection: 'Inspection', svc_tires: 'Tires', svc_battery: 'Battery', svc_insurance: 'Insurance', svc_other: 'Other',
       cost: 'Cost', odometer: 'Odometer', vendor: 'Vendor/garage', performed_at: 'Date', performed_by: 'Performed by', next_due_date: 'Next due', next_due_odometer: 'Next odometer', scheduled: 'Scheduled', done_m: 'Done', service_log: 'Service log',
       damages: 'Damages & claims', new_damage: 'Report damage', severity: 'Severity', sev_minor: 'Minor', sev_moderate: 'Moderate', sev_major: 'Major', st_open: 'Open', st_in_repair: 'In repair', st_resolved: 'Resolved', cost_estimate: 'Cost estimate', repair_cost: 'Repair cost', reported_by: 'Reported by', occurred_at: 'Occurred on', insurance_claim: 'Insurance claim', claim_ref: 'Claim ref', claim_amount: 'Claim amount', mark_resolved: 'Mark resolved', photos: 'Photos', svc_title: 'Title', details: 'Details',
-      insurance_expiry: 'Insurance expiry', registration_expiry: 'Registration expiry', inspection_expiry: 'Inspection expiry', next_service: 'Next service', fleet_reminders: 'Fleet reminders', overdue: 'Overdue', no_reminders: 'No upcoming reminders', fleet_compliance: 'Fleet dates (insurance/registration/inspection)', utilization: 'Fleet utilization', this_week: 'This week', delivered_count: 'Delivered', returned_count: 'Returned', upcoming_returns: 'Upcoming returns', vs_last_week: 'vs last week', collected: 'Collected',
+      insurance_expiry: 'Insurance expiry', registration_expiry: 'Registration expiry', inspection_expiry: 'Inspection expiry', next_service: 'Next service', fleet_reminders: 'Fleet reminders', overdue: 'Overdue', no_reminders: 'No upcoming reminders', fleet_compliance: 'Fleet dates (insurance/registration/inspection)', utilization: 'Fleet utilization', this_week: 'This week', delivered_count: 'Delivered', returned_count: 'Returned', upcoming_returns: 'Upcoming returns', vs_last_week: 'vs last week', collected: 'Collected', search_all: 'Search everything…', open_search: 'Search',
     },
   };
 
@@ -454,13 +454,73 @@
     return '<svg class="rc-ic" width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICONS[name] || '') + '</svg>';
   }
 
+  /* ---------- command palette (⌘K / Ctrl+K global search) ---------- */
+  function initPalette() {
+    if (document.getElementById('rc-cmdk')) return;
+    const ov = document.createElement('div');
+    ov.id = 'rc-cmdk'; ov.className = 'rc-cmdk';
+    ov.innerHTML = '<div class="rc-cmdk-box"><div class="rc-cmdk-top">' + icon('search', 18) + '<input id="rc-cmdk-in" placeholder="' + t('search_all') + '" autocomplete="off"><kbd>Esc</kbd></div><div class="rc-cmdk-res" id="rc-cmdk-res"></div></div>';
+    document.body.appendChild(ov);
+    const input = ov.querySelector('#rc-cmdk-in'), res = ov.querySelector('#rc-cmdk-res');
+    const GROUPS = [['cars', 'car'], ['customers', 'customers'], ['bookings', 'bookings'], ['invoices', 'invoices']];
+    let items = [], active = -1, seq = 0, timer;
+
+    function open() { ov.classList.add('show'); input.value = ''; res.innerHTML = ''; items = []; active = -1; setTimeout(function () { input.focus(); }, 30); }
+    function close() { ov.classList.remove('show'); }
+    function paint() { res.querySelectorAll('.rc-cmdk-it').forEach(function (el) { el.classList.toggle('on', +el.dataset.i === active); const on = +el.dataset.i === active; if (on) el.scrollIntoView({ block: 'nearest' }); }); }
+    function go(i) { const it = items[i]; if (it && it.href) { close(); location.href = it.href; } }
+    function render(groups) {
+      items = []; let h = '';
+      GROUPS.forEach(function (g) {
+        const arr = groups[g[0]] || []; if (!arr.length) return;
+        h += '<div class="rc-cmdk-grp">' + t(g[0]) + '</div>';
+        arr.forEach(function (it) {
+          const idx = items.length; items.push(it);
+          const label = it.label || (LANG === 'en' ? it.en : it.ar) || it.ar || it.en || '';
+          h += '<div class="rc-cmdk-it" data-i="' + idx + '">' + icon(g[1], 16) + '<div class="tx"><b>' + esc(label) + '</b>' + (it.sub ? '<span>' + esc(it.sub) + '</span>' : '') + '</div></div>';
+        });
+      });
+      res.innerHTML = h || '<div class="rc-cmdk-empty">' + t('no_data') + '</div>';
+      active = items.length ? 0 : -1; paint();
+      res.querySelectorAll('.rc-cmdk-it').forEach(function (el) { el.onmouseenter = function () { active = +el.dataset.i; paint(); }; el.onclick = function () { go(+el.dataset.i); }; });
+    }
+    input.addEventListener('input', function () {
+      const q = input.value.trim(); clearTimeout(timer);
+      if (!q) { res.innerHTML = ''; items = []; return; }
+      timer = setTimeout(function () {
+        const my = ++seq;
+        api('GET', '/admin/search?q=' + encodeURIComponent(q)).then(function (d) { if (my === seq) render(d); }).catch(function () {});
+      }, 180);
+    });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); active = Math.min(items.length - 1, active + 1); paint(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); active = Math.max(0, active - 1); paint(); }
+      else if (e.key === 'Enter') { e.preventDefault(); go(active); }
+      else if (e.key === 'Escape') { close(); }
+    });
+    ov.addEventListener('mousedown', function (e) { if (e.target === ov) close(); });
+    document.addEventListener('keydown', function (e) {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) { e.preventDefault(); ov.classList.contains('show') ? close() : open(); }
+    });
+    // Topbar trigger (also serves touch devices without a keyboard).
+    const top = document.querySelector('.rc-top .sp');
+    if (top && !document.querySelector('.rc-cmdk-btn')) {
+      const btn = document.createElement('button');
+      btn.className = 'rc-cmdk-btn'; btn.type = 'button';
+      btn.innerHTML = icon('search', 15) + '<span>' + t('open_search') + '</span><kbd>⌘K</kbd>';
+      btn.onclick = open;
+      top.parentNode.insertBefore(btn, top.nextSibling);
+    }
+    RC._openPalette = open;
+  }
+
   window.RC = {
     AREA: AREA, api: api, apiForm: apiForm, token: token, guard: guard,
     t: t, L: L, lang: function () { return LANG; }, applyLang: applyLang, initLang: initLang,
     esc: esc, money: money, date: date, setCurrency: setCurrency, toast: toast,
     modal: modal, closeModal: closeModal, confirm: confirmDialog, badge: badge,
     enhanceSelects: enhanceSelects, icon: icon, applyTheme: applyTheme, initTheme: initTheme,
-    applyPreset: applyPreset, PRESETS: PRESETS,
+    applyPreset: applyPreset, PRESETS: PRESETS, initPalette: initPalette,
     LOGIN_URL: LOGIN_URL,
   };
 })();

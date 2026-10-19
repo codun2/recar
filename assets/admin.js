@@ -32,6 +32,7 @@
     } catch (e) { return; }
     renderNav();
     paintUser();
+    RC.initPalette();
     loadBadges();
     const page = document.body.dataset.page;
     if (PAGES[page]) PAGES[page]();

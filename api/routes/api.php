@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\Admin\InvoiceController;
 use App\Http\Controllers\Api\Admin\MaintenanceController;
 use App\Http\Controllers\Api\Admin\NotificationController;
 use App\Http\Controllers\Api\Admin\PaymentController;
+use App\Http\Controllers\Api\Admin\SearchController;
 use App\Http\Controllers\Api\Admin\SettingController;
 use App\Http\Controllers\Api\Admin\StaffController;
 use App\Http\Controllers\Api\AdminAuthController;
@@ -74,6 +75,7 @@ Route::prefix('admin')->group(function () {
     Route::middleware(['auth:sanctum', 'staff', 'company'])->group(function () {
         Route::get('me', [AdminAuthController::class, 'me']);
         Route::get('badges', [AdminAuthController::class, 'badges']);
+        Route::get('search', [SearchController::class, 'index']);
         Route::post('logout', [AdminAuthController::class, 'logout']);
 
         Route::get('dashboard', [AdminDashboardController::class, 'index']);
