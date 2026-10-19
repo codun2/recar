@@ -395,3 +395,6 @@ table.rc-table{width:100%;border-collapse:collapse;font-size:.9rem}
 .adv-color input[type=text]{border:none;background:none;color:var(--text);font-family:inherit;width:100%;font-size:.85rem;outline:none}
 .adv-color .clr{border:none;background:none;color:var(--muted);cursor:pointer;flex:none;font-size:1rem;line-height:1}
 .theme-card .tc-foot{color:var(--text)}
+
+.cf-sep{display:flex;align-items:center;gap:6px;font-weight:800;font-size:.85rem;color:var(--amber);margin:10px 0 2px;padding-top:10px;border-top:1px dashed var(--line)}
+.cf-sep svg{width:15px;height:15px}

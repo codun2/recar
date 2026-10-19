@@ -183,6 +183,8 @@
     const id = new URLSearchParams(location.search).get('id');
     const cats = await RC.api('GET', '/admin/categories');
     const catOpts = [{ v: '', l: '—' }].concat(cats.map(function (c) { return { v: c.id, l: L(c, 'name') }; }));
+    const branches = await RC.api('GET', '/admin/branches').catch(function () { return []; });
+    const branchOpts = [{ v: '', l: t('no_branch') }].concat((branches || []).map(function (x) { return { v: x.id, l: x.name }; }));
     let b = {};
     if (id) { b = await RC.api('GET', '/admin/cars/' + id); }
     const h1 = document.querySelector('.rc-top h1'); if (h1) { h1.removeAttribute('data-i18n'); h1.textContent = id ? t('edit') : t('new_car'); }
@@ -224,6 +226,10 @@
       '<div class="row">' + field(t('transmission'), select('transmission', [{ v: 'auto', l: t('auto') }, { v: 'manual', l: t('manual') }], b.transmission)) + field(t('fuel'), select('fuel', [{ v: 'petrol', l: t('petrol') }, { v: 'diesel', l: t('diesel') }, { v: 'electric', l: t('electric') }, { v: 'hybrid', l: t('hybrid') }], b.fuel)) + '</div>' +
       '<div class="row">' + field(t('year'), input('year', b.year, 'number')) + field(t('seats'), input('seats', b.seats, 'number')) + '</div>' +
       '<div class="row">' + field(t('status'), select('status', [{ v: 'available', l: t('available') }, { v: 'rented', l: t('rented') }, { v: 'maintenance', l: t('maintenance') }, { v: 'hidden', l: t('hidden') }], b.status || 'available')) + '<div class="rc-field"><label>' + t('featured') + '</label><label class="chk" style="padding-top:8px"><input type="checkbox" name="featured" ' + (b.featured ? 'checked' : '') + '> ' + t('featured') + '</label></div></div>' +
+      '<div class="row">' + field(t('branch'), select('branch_id', branchOpts, b.branch_id)) + field(t('mileage'), input('mileage', b.mileage, 'number')) + '</div>' +
+      '<div class="cf-sep">' + RC.icon('wrench', 15) + ' ' + t('fleet_compliance') + '</div>' +
+      '<div class="row">' + field(t('insurance_expiry'), input('insurance_expiry', (b.insurance_expiry || '').slice(0, 10), 'date')) + field(t('registration_expiry'), input('registration_expiry', (b.registration_expiry || '').slice(0, 10), 'date')) + '</div>' +
+      '<div class="row">' + field(t('inspection_expiry'), input('inspection_expiry', (b.inspection_expiry || '').slice(0, 10), 'date')) + field(t('next_service'), input('next_service_date', (b.next_service_date || '').slice(0, 10), 'date')) + '</div>' +
       field(t('description') + ' (ع)', textarea('description_ar', b.description_ar)) +
       field(t('description') + ' (EN)', textarea('description_en', b.description_en)) +
       '</form>' +
@@ -232,10 +238,41 @@
       '<div class="gal" id="gal"></div>' +
       '<label class="cf-upload" id="uplab">' + RC.icon('upload', 16) + ' ' + t('add') + '<input type="file" id="imgin" multiple accept="image/*" hidden></label>' +
       '</div></div>' +
-      '<div style="display:flex;gap:10px;margin-top:16px"><button class="rc-btn navy" id="save">' + RC.icon('check', 16) + ' ' + t('save') + '</button><button class="rc-btn ghost" id="cancel">' + t('cancel') + '</button></div>';
+      '<div style="display:flex;gap:10px;margin-top:16px"><button class="rc-btn navy" id="save">' + RC.icon('check', 16) + ' ' + t('save') + '</button><button class="rc-btn ghost" id="cancel">' + t('cancel') + '</button>' + (id && branches.length ? '<div style="flex:1"></div><button class="rc-btn ghost" id="trbtn">' + RC.icon('transfer', 16) + ' ' + t('transfer_car') + '</button>' : '') + '</div>' +
+      (id ? '<div id="carextra" style="margin-top:18px"></div>' : '');
 
     $('#back').onclick = function () { location.href = 'cars.html'; };
     $('#cancel').onclick = function () { location.href = 'cars.html'; };
+    if ($('#trbtn')) $('#trbtn').onclick = function () { transferForm(); };
+    if (id) loadCarExtra();
+
+    function transferForm() {
+      const opts = branchOpts.filter(function (o) { return String(o.v) !== String(b.branch_id); });
+      const body = '<form class="rc-form" id="trf">' +
+        '<div class="muted" style="font-size:.85rem;margin-bottom:6px">' + t('current_branch') + ': <b>' + esc((b.branch && b.branch.name) || t('no_branch')) + '</b></div>' +
+        field(t('transfer_to'), select('to_branch_id', opts, '')) +
+        field(t('performed_by'), input('transferred_by', (ME && ME.name) || '')) +
+        field(t('notes'), input('note', '')) + '</form>';
+      const w = RC.modal(t('transfer_car'), body, '<button class="rc-btn ghost" onclick="RC.closeModal()">' + t('cancel') + '</button><button class="rc-btn" id="trs">' + t('transfer') + '</button>');
+      $('#trs', w).onclick = async function () { const f = $('#trf', w); try { await RC.api('POST', '/admin/cars/' + id + '/transfer', formData(f)); RC.closeModal(); RC.toast(t('transfer_done')); PAGES['car-form'](); } catch (e) { err(e, f); } };
+    }
+
+    async function loadCarExtra() {
+      let mts = [], dms = [];
+      try { mts = await RC.api('GET', '/admin/maintenance?car_id=' + id); } catch (e) {}
+      try { dms = await RC.api('GET', '/admin/damages?car_id=' + id); } catch (e) {}
+      const mrows = (mts || []).map(function (m) {
+        return '<div class="tl-item"><div class="tl-dot"></div><div class="tl-body"><div style="display:flex;justify-content:space-between;gap:8px"><b>' + t('svc_' + (m.type || 'service')) + ' — ' + esc(m.title || '') + '</b><span>' + RC.money(m.cost) + '</span></div><div class="muted" style="font-size:.78rem">' + (m.performed_at ? RC.date(m.performed_at) : '') + (m.odometer ? ' · ' + m.odometer + ' كم' : '') + (m.vendor ? ' · ' + esc(m.vendor) : '') + (m.next_due_date ? ' · ' + t('next_due_date') + ' ' + RC.date(m.next_due_date) : '') + '</div></div></div>';
+      }).join('') || '<div class="rc-empty">' + t('no_data') + '</div>';
+      const drows = (dms || []).map(function (dm) {
+        return '<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)"><div><b>' + esc(dm.title || '') + '</b><div class="muted" style="font-size:.76rem">' + t('sev_' + (dm.severity || 'minor')) + ' · ' + t('st_' + (dm.status || 'open')) + (dm.occurred_at ? ' · ' + RC.date(dm.occurred_at) : '') + '</div></div><span>' + RC.money(dm.repair_cost && +dm.repair_cost > 0 ? dm.repair_cost : dm.cost_estimate) + '</span></div>';
+      }).join('') || '<div class="rc-empty">' + t('no_data') + '</div>';
+      $('#carextra').innerHTML =
+        '<div class="rc-grid" style="grid-template-columns:1fr 1fr;gap:16px">' +
+        '<div class="rc-card"><h3>' + RC.icon('wrench', 16) + ' ' + t('service_log') + ' <a href="maintenance.html" class="rc-link" style="font-size:.78rem;font-weight:600;margin-inline-start:auto">' + t('maintenance_log') + ' ›</a></h3><div class="rc-timeline">' + mrows + '</div></div>' +
+        '<div class="rc-card"><h3>' + RC.icon('damage', 16) + ' ' + t('damages') + '</h3>' + drows + '</div>' +
+        '</div>';
+    }
     if ($('#hobtn')) $('#hobtn').onclick = function () { handoverForm(ab); };
     if ($('#delbtn')) $('#delbtn').onclick = function () { deliverForm(ab); };
     if ($('#mret')) $('#mret').onclick = async function () {
