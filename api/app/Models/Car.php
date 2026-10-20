@@ -21,6 +21,19 @@ class Car extends Model
 {
     use BelongsToCompany;
 
+    /** Log the car's life automatically: creation + every status transition. */
+    protected static function booted(): void
+    {
+        static::created(function (Car $car) {
+            CarEvent::log($car, 'created', null, $car->status);
+        });
+        static::updated(function (Car $car) {
+            if ($car->wasChanged('status')) {
+                CarEvent::log($car, 'status_change', $car->getOriginal('status'), $car->status);
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [
@@ -71,6 +84,11 @@ class Car extends Model
     public function transfers(): HasMany
     {
         return $this->hasMany(CarTransfer::class)->orderByDesc('id');
+    }
+
+    public function events(): HasMany
+    {
+        return $this->hasMany(CarEvent::class)->orderByDesc('happened_at');
     }
 
     public function images(): HasMany

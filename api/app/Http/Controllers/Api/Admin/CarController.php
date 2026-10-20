@@ -74,6 +74,15 @@ class CarController extends Controller
         ]);
     }
 
+    /** Automatic status timeline: creation + every status transition. */
+    public function events(Car $car)
+    {
+        $events = $car->events()
+            ->get(['id', 'type', 'from_status', 'to_status', 'actor', 'note', 'happened_at']);
+
+        return response()->json(['events' => $events]);
+    }
+
     public function store(Request $request)
     {
         $data = $this->validateData($request);

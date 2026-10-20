@@ -285,10 +285,25 @@
       $('#trs', w).onclick = async function () { const f = $('#trf', w); try { await RC.api('POST', '/admin/cars/' + id + '/transfer', formData(f)); RC.closeModal(); RC.toast(t('transfer_done')); PAGES['car-form'](); } catch (e) { err(e, f); } };
     }
 
+    function evWhen(d) {
+      if (!d) return '';
+      var dt = new Date(d);
+      var loc = RC.lang() === 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB';
+      return RC.date(d) + ' · ' + dt.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' });
+    }
+
     async function loadCarExtra() {
-      let mts = [], dms = [];
+      let mts = [], dms = [], evs = [];
       try { mts = await RC.api('GET', '/admin/maintenance?car_id=' + id); } catch (e) {}
       try { dms = await RC.api('GET', '/admin/damages?car_id=' + id); } catch (e) {}
+      try { const er = await RC.api('GET', '/admin/cars/' + id + '/events'); evs = (er && er.events) || []; } catch (e) {}
+      const erows = (evs || []).map(function (e) {
+        const label = e.type === 'created' ? t('ev_created') : t('ev_status');
+        const trans = (e.type === 'status_change' && e.to_status)
+          ? ' ' + (e.from_status ? RC.badge(e.from_status) + ' → ' : '') + RC.badge(e.to_status)
+          : (e.to_status ? ' ' + RC.badge(e.to_status) : '');
+        return '<div class="tl-item"><div class="tl-dot"></div><div class="tl-body"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><b>' + label + '</b><span>' + trans + '</span></div><div class="muted" style="font-size:.78rem">' + evWhen(e.happened_at) + (e.actor ? ' · ' + esc(e.actor) : '') + '</div></div></div>';
+      }).join('') || '<div class="rc-empty">' + t('no_events') + '</div>';
       const mrows = (mts || []).map(function (m) {
         return '<div class="tl-item"><div class="tl-dot"></div><div class="tl-body"><div style="display:flex;justify-content:space-between;gap:8px"><b>' + t('svc_' + (m.type || 'service')) + ' — ' + esc(m.title || '') + '</b><span>' + RC.money(m.cost) + '</span></div><div class="muted" style="font-size:.78rem">' + (m.performed_at ? RC.date(m.performed_at) : '') + (m.odometer ? ' · ' + m.odometer + ' كم' : '') + (m.vendor ? ' · ' + esc(m.vendor) : '') + (m.next_due_date ? ' · ' + t('next_due_date') + ' ' + RC.date(m.next_due_date) : '') + '</div></div></div>';
       }).join('') || '<div class="rc-empty">' + t('no_data') + '</div>';
@@ -299,7 +314,8 @@
         '<div class="rc-grid" style="grid-template-columns:1fr 1fr;gap:16px">' +
         '<div class="rc-card"><h3>' + RC.icon('wrench', 16) + ' ' + t('service_log') + ' <a href="maintenance.html" class="rc-link" style="font-size:.78rem;font-weight:600;margin-inline-start:auto">' + t('maintenance_log') + ' ›</a></h3><div class="rc-timeline">' + mrows + '</div></div>' +
         '<div class="rc-card"><h3>' + RC.icon('damage', 16) + ' ' + t('damages') + '</h3>' + drows + '</div>' +
-        '</div>';
+        '</div>' +
+        '<div class="rc-card" style="margin-top:16px"><h3>' + RC.icon('history', 16) + ' ' + t('status_log') + '</h3><div class="rc-timeline">' + erows + '</div></div>';
     }
     if ($('#hobtn')) $('#hobtn').onclick = function () { handoverForm(ab); };
     if ($('#delbtn')) $('#delbtn').onclick = function () { deliverForm(ab); };
