@@ -111,6 +111,24 @@
     RC.toast(e.message || t('error'), 'err');
   }
 
+  /* ---------- rental contract / inspection shared helpers ---------- */
+  const CHK_KEYS = ['exterior', 'tires', 'spare', 'tools', 'fire_ext', 'triangle', 'lights', 'ac', 'interior', 'docs'];
+  function fuelOpts() { return [{ v: '', l: '—' }, { v: 0, l: t('fuel_empty') }, { v: 2, l: '¼' }, { v: 4, l: '½' }, { v: 6, l: '¾' }, { v: 8, l: t('fuel_full') }]; }
+  function fuelLabel(v) { if (v == null || v === '') return '—'; v = +v; if (v <= 0) return t('fuel_empty'); if (v >= 8) return t('fuel_full'); return Math.round(v / 8 * 100) + '%'; }
+  function checklistGrid(prefix, existing) {
+    existing = existing || {};
+    return '<div class="insp-chk">' + CHK_KEYS.map(function (k) {
+      const cur = existing[k] || 'ok';
+      const opt = function (val, lbl, cls) { return '<label class="ic-opt ' + cls + '"><input type="radio" name="' + prefix + '_' + k + '" value="' + val + '"' + (cur === val ? ' checked' : '') + '>' + esc(lbl) + '</label>'; };
+      return '<div class="ic-row"><span class="ic-lb">' + t('chk_' + k) + '</span><span class="ic-opts">' + opt('ok', t('cond_ok'), 'ok') + opt('note', t('cond_note'), 'note') + opt('bad', t('cond_bad'), 'bad') + '</span></div>';
+    }).join('') + '</div>';
+  }
+  function collectChecklist(form, prefix) {
+    const o = {};
+    CHK_KEYS.forEach(function (k) { const el = form.querySelector('[name="' + prefix + '_' + k + '"]:checked'); if (el) o[k] = el.value; });
+    return JSON.stringify(o);
+  }
+
   /* ========== PAGES ========== */
   const PAGES = {};
 
@@ -230,9 +248,10 @@
       const delivered = ab.delivered_by
         ? '<div class="muted" style="font-size:.84rem;margin-top:8px">' + RC.icon('check', 13) + ' ' + t('delivery_info') + ': ' + t('delivered_by') + ' <b>' + esc(ab.delivered_by) + '</b> · ' + t('delivered_date') + ' ' + RC.date(ab.delivered_at) + (ab.delivered_mileage ? ' · ' + t('mileage') + ' ' + ab.delivered_mileage : '') + '</div>'
         : '';
+      const contractBtn = '<a class="rc-btn ghost" href="contract.html?id=' + ab.id + '">' + RC.icon('receipt', 16) + ' ' + t('contract') + '</a>';
       handoverBanner =
         '<div class="handover-box">' +
-        '<div class="hb-row"><div><b>' + (isActive ? t('rented_now') : t('ready_to_deliver')) + '</b><div class="muted" style="font-size:.84rem">' + meta + '</div></div>' + action + '</div>' +
+        '<div class="hb-row"><div><b>' + (isActive ? t('rented_now') : t('ready_to_deliver')) + '</b><div class="muted" style="font-size:.84rem">' + meta + '</div></div><div class="hb-actions">' + contractBtn + action + '</div></div>' +
         delivered + '</div>';
     } else if (id && b.status === 'rented') {
       // Manually marked "rented" with no linked booking → offer a simple return to availability.
@@ -330,26 +349,54 @@
       const body = '<form class="rc-form" id="dlf">' +
         '<div class="muted" style="font-size:.85rem;margin-bottom:4px">' + esc(booking.reference || '') + ' · ' + esc(booking.customer ? booking.customer.name : '') + '</div>' +
         field(t('delivered_by'), input('delivered_by', (ME && ME.name) || '')) +
-        '<div class="row">' + field(t('delivered_date'), input('delivered_at', todayT, 'datetime-local')) + field(t('mileage'), input('delivered_mileage', '', 'number')) + '</div>' +
+        '<div class="row">' + field(t('delivered_date'), input('delivered_at', todayT, 'datetime-local')) + field(t('odometer_out'), input('delivered_mileage', booking.car ? booking.car.mileage : '', 'number')) + '</div>' +
+        field(t('fuel_out'), select('delivered_fuel', fuelOpts(), 8)) +
+        '<div class="cf-sep">' + RC.icon('damage', 15) + ' ' + t('inspection_out') + '</div>' +
+        checklistGrid('do', null) +
+        field(t('photos_before'), '<input class="rc-input" type="file" name="photos" id="dophotos" multiple accept="image/*"><div class="insp-prev" id="doprev"></div>') +
         field(t('notes'), textarea('delivered_notes', '')) +
         '</form>';
       const w = RC.modal(t('deliver_car'), body, '<button class="rc-btn ghost" onclick="RC.closeModal()">' + t('cancel') + '</button><button class="rc-btn" id="dls">' + t('deliver_car') + '</button>');
+      previewPhotos($('#dophotos', w), $('#doprev', w));
       $('#dls', w).onclick = async function () {
         const f = $('#dlf', w); f.querySelectorAll('.err').forEach(function (e) { e.remove(); });
-        const d = formData(f);
-        try { await RC.api('POST', '/admin/bookings/' + booking.id + '/deliver', d); RC.closeModal(); RC.toast(t('saved')); PAGES['car-form'](); }
+        const fd = new FormData();
+        ['delivered_by', 'delivered_at', 'delivered_mileage', 'delivered_notes', 'delivered_fuel'].forEach(function (k) { const v = f[k] ? f[k].value : ''; if (v !== '') fd.append(k, v); });
+        fd.append('delivered_checklist', collectChecklist(f, 'do'));
+        const files = f.photos.files; for (let i = 0; i < files.length; i++) fd.append('photos[]', files[i]);
+        try { await RC.apiForm('POST', '/admin/bookings/' + booking.id + '/deliver', fd); RC.closeModal(); RC.toast(t('saved')); PAGES['car-form'](); }
         catch (e) { err(e, f); }
+      };
+    }
+    function previewPhotos(inp, box) {
+      if (!inp || !box) return;
+      inp.onchange = function () {
+        box.innerHTML = '';
+        Array.prototype.forEach.call(inp.files, function (file) {
+          const img = document.createElement('div'); img.className = 'insp-thumb';
+          img.style.backgroundImage = 'url(' + URL.createObjectURL(file) + ')';
+          box.appendChild(img);
+        });
       };
     }
 
     function handoverForm(booking) {
       const today = new Date().toISOString().slice(0, 10);
       const remaining = Math.max(0, (booking.total || 0) - (booking.deposit_paid || 0));
+      const outMileage = booking.delivered_mileage;
+      const kmLimit = +booking.km_limit || 0;
+      const kmPrice = +booking.extra_km_price || 0;
       const body = '<form class="rc-form" id="hof">' +
         field(t('handover_by'), input('handover_by', (ME && ME.name) || '')) +
-        '<div class="row">' + field(t('handover_date'), input('handover_at', today, 'date')) + field(t('mileage'), input('handover_mileage', '', 'number')) + '</div>' +
+        '<div class="row">' + field(t('handover_date'), input('handover_at', today, 'date')) + field(t('odometer_in'), input('handover_mileage', '', 'number')) + '</div>' +
+        field(t('fuel_in'), select('handover_fuel', fuelOpts(), '')) +
+        (outMileage != null ? '<div class="insp-km muted" id="kmcalc" style="font-size:.82rem;margin:-4px 0 6px"></div>' : '') +
+        '<div class="cf-sep">' + RC.icon('damage', 15) + ' ' + t('inspection_in') + '</div>' +
+        checklistGrid('ho', null) +
+        field(t('photos_after'), '<input class="rc-input" type="file" name="photos[]" id="hophotos" multiple accept="image/*"><div class="insp-prev" id="hoprev"></div>') +
         field(t('voucher'), '<input class="rc-input" type="file" name="receipt" accept="image/*">') +
         field(t('notes'), textarea('handover_notes', '')) +
+        (kmLimit > 0 ? '<label class="chk" id="kmwrap" style="display:none"><input type="checkbox" name="charge_extra_km" id="kmchk"> <span id="kmchklabel">' + t('charge_extra_km') + '</span></label>' : '') +
         (remaining > 0.001
           ? '<div class="rc-card" style="box-shadow:none;background:var(--surface-2);padding:12px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span>' + t('remaining') + '</span><b style="color:var(--red)">' + RC.money(remaining) + '</b></div>' +
             '<label class="chk"><input type="checkbox" name="settle" id="settlechk"> ' + t('settle_remaining') + '</label>' +
@@ -357,13 +404,39 @@
           : '') +
         '</form>';
       const w = RC.modal(t('confirm_handover'), body, '<button class="rc-btn ghost" onclick="RC.closeModal()">' + t('cancel') + '</button><button class="rc-btn" id="hos">' + t('confirm_handover') + '</button>');
+      previewPhotos($('#hophotos', w), $('#hoprev', w));
       if ($('#settlechk', w)) $('#settlechk', w).onchange = function () { $('#settlebox', w).style.display = this.checked ? '' : 'none'; };
+      const kmcalc = $('#kmcalc', w);
+      if (kmcalc) {
+        const mi = $('#hof', w).handover_mileage;
+        const recalc = function () {
+          const inM = +mi.value; if (!inM || inM < outMileage) { kmcalc.textContent = ''; const kw = $('#kmwrap', w); if (kw) kw.style.display = 'none'; return; }
+          const used = inM - outMileage;
+          let txt = t('distance_driven') + ': ' + used + ' ' + t('km_unit');
+          if (kmLimit > 0) {
+            const allowed = kmLimit * (booking.days || 1);
+            const extra = Math.max(0, used - allowed);
+            txt += ' · ' + t('km_allowed') + ': ' + allowed + ' ' + t('km_unit');
+            const kw = $('#kmwrap', w);
+            if (extra > 0) {
+              const charge = extra * kmPrice;
+              txt += ' · ' + t('extra_km') + ': ' + extra + ' ' + t('km_unit') + ' (' + RC.money(charge) + ')';
+              if (kw) { kw.style.display = ''; const lb = $('#kmchklabel', w); if (lb) lb.textContent = t('charge_extra_km') + ' (' + RC.money(charge) + ')'; }
+            } else if (kw) { kw.style.display = 'none'; }
+          }
+          kmcalc.textContent = txt;
+        };
+        mi.oninput = recalc;
+      }
       $('#hos', w).onclick = async function () {
         const f = $('#hof', w); f.querySelectorAll('.err').forEach(function (e) { e.remove(); });
         const fd = new FormData(f);
         if (!fd.get('receipt') || !fd.get('receipt').name) fd.delete('receipt');
         fd.set('settle_remaining', (f.settle && f.settle.checked) ? 1 : 0);
-        Array.from(fd.keys()).forEach(function (k) { if (fd.get(k) === '') fd.delete(k); });
+        fd.set('charge_extra_km', (f.charge_extra_km && f.charge_extra_km.checked) ? 1 : 0);
+        CHK_KEYS.forEach(function (k) { fd.delete('ho_' + k); });
+        fd.set('handover_checklist', collectChecklist(f, 'ho'));
+        Array.from(fd.keys()).forEach(function (k) { if (fd.get(k) === '' && k !== 'handover_checklist') fd.delete(k); });
         try {
           await RC.apiForm('POST', '/admin/bookings/' + booking.id + '/handover', fd);
           RC.closeModal(); RC.toast(t('saved'));
@@ -662,9 +735,10 @@
         (b.receipt ? '<div style="margin-bottom:12px"><b>' + t('receipt') + ':</b><br><a href="' + esc(b.receipt) + '" target="_blank"><img src="' + esc(b.receipt) + '" class="receipt-thumb" style="max-height:220px"></a></div>' : '');
       const body = info + '<form class="rc-form" id="sf">' + field(t('status'), select('status', ['pending', 'confirmed', 'active', 'completed', 'cancelled'].map(function (s) { return { v: s, l: t(s) }; }), b.status)) + '</form>';
       const canWa = b.customer && b.customer.phone;
-      const foot = (canWa ? '<button class="rc-btn ghost" id="wabtn" style="color:#25d366">' + RC.icon('whatsapp', 16) + ' ' + t('whatsapp') + '</button>' : '') + '<button class="rc-btn ghost" id="mkinv">' + RC.icon('invoices', 16) + ' ' + t('create_invoice') + '</button><button class="rc-btn" id="ss">' + t('save') + '</button>';
+      const foot = (canWa ? '<button class="rc-btn ghost" id="wabtn" style="color:#25d366">' + RC.icon('whatsapp', 16) + ' ' + t('whatsapp') + '</button>' : '') + '<button class="rc-btn ghost" id="ctrbtn">' + RC.icon('receipt', 16) + ' ' + t('contract') + '</button><button class="rc-btn ghost" id="mkinv">' + RC.icon('invoices', 16) + ' ' + t('create_invoice') + '</button><button class="rc-btn" id="ss">' + t('save') + '</button>';
       const w = RC.modal(b.reference || '#' + b.id, body, foot);
       $('#ss', w).onclick = async function () { try { await RC.api('PATCH', '/admin/bookings/' + b.id + '/status', { status: $('#sf', w).status.value }); RC.closeModal(); RC.toast(t('saved')); reload(); } catch (e) { err(e); } };
+      $('#ctrbtn', w).onclick = function () { location.href = 'contract.html?id=' + b.id; };
       $('#mkinv', w).onclick = function () { RC.closeModal(); location.href = 'invoices.html?booking=' + b.id; };
       if (canWa) $('#wabtn', w).onclick = function () {
         const msg = 'مرحباً ' + (b.customer.name || '') + '، تم تأكيد حجزك' + (COMPANY ? ' لدى ' + COMPANY.name : '') + '.\n' +
@@ -687,12 +761,18 @@
         '<label class="chk"><input type="checkbox" name="delivery" id="delchk"> ' + t('request_delivery') + '</label>' +
         '<div id="delbox" style="display:none">' + '<div class="row">' + field(t('delivery_address'), input('delivery_address', '')) + field(t('delivery_fee'), input('delivery_fee', 0, 'number')) + '</div></div>' +
         '<div class="row">' + field(t('status'), select('status', ['pending', 'confirmed', 'active'].map(function (s) { return { v: s, l: t(s) }; }), 'confirmed')) + field(' ', '<div id="priceview" style="font-weight:800;color:var(--amber);padding-top:26px"></div>') + '</div>' +
+        '<div class="cf-sep">' + RC.icon('damage', 15) + ' ' + t('insurance_and_terms') + ' <span class="muted" style="font-weight:600;font-size:.72rem">(' + t('optional_section') + ')</span></div>' +
+        '<div class="row">' + field(t('insurance_type'), select('insurance_type', [{ v: 'none', l: t('ins_none') }, { v: 'third_party', l: t('ins_third_party') }, { v: 'comprehensive', l: t('ins_comprehensive') }], 'third_party')) + field(t('insurance_fee'), input('insurance_fee', 0, 'number')) + '</div>' +
+        '<div class="row">' + field(t('insurance_company'), input('insurance_company', '')) + field(t('insurance_policy'), input('insurance_policy', '')) + '</div>' +
+        '<div class="row">' + field(t('insurance_excess'), input('insurance_excess', 0, 'number')) + field(t('km_limit'), input('km_limit', '', 'number')) + '</div>' +
+        '<div class="row">' + field(t('extra_km_price'), input('extra_km_price', 0, 'number')) + field(t('second_driver_name'), input('second_driver_name', '')) + '</div>' +
+        field(t('second_driver_license'), input('second_driver_license', '')) +
         field(t('notes'), textarea('notes', '')) + '</form>';
       const w = RC.modal(t('new_booking'), body, '<button class="rc-btn ghost" onclick="RC.closeModal()">' + t('cancel') + '</button><button class="rc-btn" id="bs">' + t('save') + '</button>');
       const f = $('#bf', w);
       $('#delchk', w).onchange = function () { $('#delbox', w).style.display = this.checked ? '' : 'none'; quote(); };
-      async function quote() { if (f.car_id.value && f.start_date.value && f.end_date.value) { try { const fee = f.delivery.checked ? (f.delivery_fee.value || 0) : 0; const q = await RC.api('GET', '/admin/bookings/availability?car_id=' + f.car_id.value + '&start_date=' + f.start_date.value + '&end_date=' + f.end_date.value + '&delivery_fee=' + fee); $('#priceview', w).textContent = q.days + ' ' + t('days') + ' · ' + RC.money(q.total) + (q.available ? '' : ' ⚠️'); } catch (e) {} } }
-      f.car_id.onchange = quote; f.start_date.onchange = quote; f.end_date.onchange = quote; f.delivery_fee.onchange = quote;
+      async function quote() { if (f.car_id.value && f.start_date.value && f.end_date.value) { try { const fee = f.delivery.checked ? (f.delivery_fee.value || 0) : 0; const insFee = f.insurance_fee.value || 0; const q = await RC.api('GET', '/admin/bookings/availability?car_id=' + f.car_id.value + '&start_date=' + f.start_date.value + '&end_date=' + f.end_date.value + '&delivery_fee=' + fee + '&insurance_fee=' + insFee); $('#priceview', w).textContent = q.days + ' ' + t('days') + ' · ' + RC.money(q.total) + (q.available ? '' : ' ⚠️'); } catch (e) {} } }
+      f.car_id.onchange = quote; f.start_date.onchange = quote; f.end_date.onchange = quote; f.delivery_fee.onchange = quote; f.insurance_fee.onchange = quote;
       $('#bs', w).onclick = async function () { f.querySelectorAll('.err').forEach(function (e) { e.remove(); }); const d = formData(f); d.delivery = f.delivery.checked ? 1 : 0; try { await RC.api('POST', '/admin/bookings', d); RC.closeModal(); RC.toast(t('saved')); reload(); } catch (e) { err(e, f); } };
     }
   };
@@ -862,6 +942,7 @@
     view().innerHTML = '<p>' + t('loading') + '</p>';
     const r = await RC.api('GET', '/admin/settings');
     const c = r.company;
+    const S = r.settings || {};
     let selTheme = RC.PRESETS.indexOf(c.theme) >= 0 ? c.theme : 'gold';
     const custom = (c.theme_custom && typeof c.theme_custom === 'object') ? Object.assign({}, c.theme_custom) : {};
 
@@ -901,6 +982,13 @@
       '<div class="row">' + field(t('tax_rate'), input('tax_rate', c.tax_rate, 'number')) + field(t('invoice_prefix'), input('invoice_prefix', c.invoice_prefix)) + '</div>' +
       field(t('delivery_fee'), '<input class="rc-input" name="s_delivery_fee" type="number" value="' + esc((r.settings && r.settings.delivery_fee) || '') + '">') +
       '</div></div>' +
+      '</div>' +
+      // ---- rental agreement terms ----
+      '<div class="rc-card" style="margin-top:16px"><h3>' + RC.icon('receipt', 18) + ' ' + t('contract_terms') + '</h3>' +
+      '<p class="muted" style="font-size:.85rem;margin:-6px 0 10px">' + t('contract_terms_hint') + '</p>' +
+      '<div class="row">' + field(t('cr_number'), '<input class="rc-input" name="s_cr_number" value="' + esc(S.cr_number || '') + '">') + field(t('tax_number'), '<input class="rc-input" name="s_tax_number" value="' + esc(S.tax_number || '') + '">') + '</div>' +
+      field(t('contract_terms') + ' (ع)', '<textarea class="rc-input" name="s_contract_terms_ar" rows="6" placeholder="— ' + t('contract_terms_hint') + '">' + esc(S.contract_terms_ar || '') + '</textarea>') +
+      field(t('contract_terms') + ' (EN)', '<textarea class="rc-input" name="s_contract_terms_en" rows="6">' + esc(S.contract_terms_en || '') + '</textarea>') +
       '</div>' +
       // ---- appearance / theme presets ----
       '<div class="rc-card" style="margin-top:16px"><h3>' + RC.icon('image', 18) + ' ' + t('appearance') + '</h3>' +
@@ -961,7 +1049,9 @@
       try {
         const d = formData(f); delete d.logo;
         const deliveryFee = d.s_delivery_fee; delete d.s_delivery_fee;
+        const sKeys = ['cr_number', 'tax_number', 'contract_terms_ar', 'contract_terms_en'];
         d.settings = { delivery_fee: deliveryFee || '0' };
+        sKeys.forEach(function (k) { d.settings[k] = d['s_' + k] || ''; delete d['s_' + k]; });
         pruneCustom();
         d.theme = selTheme;
         d.theme_custom = Object.keys(custom).length ? custom : null;
@@ -1004,6 +1094,139 @@
       '<div class="rc-card"><h3>' + t('latest') + ' — ' + t('payments') + '</h3>' +
       (d.recent_payments.length ? d.recent_payments.map(function (p) { return '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><div>' + esc(p.customer ? p.customer.name : '—') + '<div class="muted" style="font-size:.74rem">' + RC.date(p.paid_at) + ' · ' + t(p.method) + '</div></div><b style="color:var(--green)">' + RC.money(p.amount) + '</b></div>'; }).join('') : '<div class="rc-empty">' + t('no_data') + '</div>') +
       '</div></div>';
+  };
+
+  /* ---- Rental agreement (printable + e-signature) ---- */
+  PAGES.contract = async function () {
+    const id = new URLSearchParams(location.search).get('id');
+    if (!id) { view().innerHTML = '<div class="rc-empty">' + t('no_data') + '</div>'; return; }
+    view().innerHTML = '<p>' + t('loading') + '</p>';
+    let data;
+    try { data = await RC.api('GET', '/admin/bookings/' + id + '/contract'); }
+    catch (e) { view().innerHTML = '<div class="rc-empty">' + t('error') + '</div>'; return; }
+    const b = data.booking, C = data.company || {}, S = data.settings || {}, xkm = data.extra_km || {};
+    const cust = b.customer || {}, car = b.car || {};
+    const money = RC.money, date = RC.date, lang = RC.lang();
+    const remaining = Math.max(0, (+b.total || 0) - (+b.deposit_paid || 0));
+
+    const pair = function (label, val, strong) { return '<div class="cd-pair"><span>' + esc(label) + '</span>' + (strong ? '<b>' : '<span class="v">') + (val == null || val === '' ? '—' : val) + (strong ? '</b>' : '</span>') + '</div>'; };
+    const section = function (title, inner) { return '<div class="cd-sec"><h4>' + esc(title) + '</h4>' + inner + '</div>'; };
+    const insLabel = b.insurance_type ? t('ins_' + b.insurance_type) : '—';
+
+    const chkView = function (cl) {
+      if (!cl || !Object.keys(cl).length) return '<span class="muted">—</span>';
+      return '<div class="cd-chk">' + CHK_KEYS.filter(function (k) { return cl[k]; }).map(function (k) {
+        return '<span class="cd-chk-i ' + cl[k] + '"><i></i>' + t('chk_' + k) + '</span>';
+      }).join('') + '</div>';
+    };
+    const photoStrip = function (arr) {
+      if (!arr || !arr.length) return '<span class="muted">' + t('no_photos') + '</span>';
+      return '<div class="cd-photos">' + arr.map(function (p) { return '<a href="' + esc(p) + '" target="_blank" class="cd-photo" style="background-image:url(' + esc(p) + ')"></a>'; }).join('') + '</div>';
+    };
+
+    const defTermsAr = '١. يقرّ المستأجر باستلامه السيارة بحالة فنية سليمة ومطابقة للبيانات والصور الموثّقة في هذا العقد.\n٢. يلتزم المستأجر بإعادة السيارة في الموعد والمكان المتفق عليهما وبنفس الحالة ومستوى الوقود.\n٣. يتحمّل المستأجر قيمة أي أضرار أو مخالفات مرورية أو غرامات تقع خلال مدة الإيجار، ومبلغ التحمّل المتفق عليه عند وقوع حادث.\n٤. لا يجوز قيادة السيارة من غير السائق/السائقين المذكورين في العقد، ولا استخدامها خارج النطاق المسموح أو لأغراض مخالفة للنظام.\n٥. تُحسب مدة الإيجار بواقع ٢٤ ساعة، وتُحتسب الكيلومترات الزائدة عن الحد المتفق عليه حسب السعر المذكور.\n٦. يُستحق الإيجار كاملاً عن أي تأخير في الإرجاع، ويحق للمؤجِّر الاحتفاظ بمبلغ التأمين لحين التسوية.';
+    const defTermsEn = '1. The lessee confirms receiving the vehicle in sound technical condition matching the data and photos documented in this agreement.\n2. The lessee shall return the vehicle at the agreed time and place in the same condition and fuel level.\n3. The lessee bears the cost of any damage, traffic violations or fines during the rental period, plus the agreed excess in case of an accident.\n4. The vehicle may only be driven by the driver(s) named in this agreement, within the permitted area and not for unlawful purposes.\n5. The rental period is counted in 24-hour units; distance beyond the agreed limit is charged at the stated rate.\n6. Full rent is due for any delay in return, and the lessor may retain the deposit until settlement.';
+    const terms = (lang === 'en' ? (S.contract_terms_en || S.contract_terms_ar) : (S.contract_terms_ar || S.contract_terms_en)) || (lang === 'en' ? defTermsEn : defTermsAr);
+
+    const kmPolicy = (+b.km_limit > 0) ? (b.km_limit + ' ' + t('km_unit') + '/' + t('days') + ' · ' + money(b.extra_km_price) + '/' + t('km_unit')) : t('km_unlimited');
+
+    const header =
+      '<div class="cd-head">' +
+      '<div class="cd-co">' + (C.logo ? '<img src="' + esc(C.logo) + '" class="cd-logo">' : '') +
+      '<div><h2>' + esc(C.name || 'سيّار') + '</h2><div class="muted">' +
+      [C.phone, C.city, (S.cr_number ? t('cr_number') + ': ' + S.cr_number : ''), (S.tax_number ? t('tax_number') + ': ' + S.tax_number : '')].filter(Boolean).map(esc).join(' · ') +
+      '</div></div></div>' +
+      '<div class="cd-title"><h1>' + t('rental_agreement') + '</h1><div class="muted">' + t('agreement_no') + ': <b>' + esc(b.reference || ('#' + b.id)) + '</b></div><div class="muted">' + date(b.created_at || b.start_date) + '</div></div>' +
+      '</div>';
+
+    const parties =
+      '<div class="cd-two">' +
+      section(t('lessor'), pair(t('company'), esc(C.name || '')) + pair(t('phone'), esc(C.phone || '')) + pair(t('address'), esc([C.address, C.city].filter(Boolean).join('، ')))) +
+      section(t('lessee'), pair(t('name'), esc(cust.name || '')) + pair(t('national_id'), esc(cust.national_id || '')) + pair(t('license'), esc(cust.license_number || '') + (cust.license_expiry ? ' · ' + date(cust.license_expiry) : '')) + pair(t('phone'), esc(cust.phone || '')) + pair(t('address'), esc([cust.address, cust.city].filter(Boolean).join('، ')))) +
+      '</div>';
+
+    const vehicle = section(t('vehicle'),
+      '<div class="cd-grid4">' +
+      pair(t('name'), esc(L(car, 'name') || '')) + pair(t('plate'), esc(car.plate_number || '')) +
+      pair(t('year'), car.year || '—') + pair(t('category'), esc((car.category && L(car.category, 'name')) || '—')) +
+      pair(t('transmission'), car.transmission ? t(car.transmission) : '—') + pair(t('fuel'), car.fuel ? t(car.fuel) : '—') +
+      pair(t('odometer'), car.mileage != null ? car.mileage + ' ' + t('km_unit') : '—') + pair(t('deposit'), money(b.deposit)) +
+      '</div>');
+
+    const periodPricing =
+      '<div class="cd-two">' +
+      section(t('period') + ' · ' + t('pricing'),
+        pair(t('start_date') + ' → ' + t('end_date'), date(b.start_date) + ' → ' + date(b.end_date) + ' (' + b.days + ' ' + t('days') + ')') +
+        pair(t('pickup_return') || t('delivery'), esc([b.pickup_location, b.dropoff_location].filter(Boolean).join(' / ') || (b.delivery ? b.delivery_address : '')) || '—') +
+        pair(t('daily_price'), money(b.daily_price)) + pair(t('subtotal'), money(b.subtotal)) +
+        (+b.discount > 0 ? pair(t('discount'), money(b.discount)) : '') +
+        (+b.delivery_fee > 0 ? pair(t('delivery_fee'), money(b.delivery_fee)) : '') +
+        (+b.insurance_fee > 0 ? pair(t('insurance_fee'), money(b.insurance_fee)) : '') +
+        (+b.tax > 0 ? pair(t('tax'), money(b.tax)) : '') +
+        pair(t('total'), money(b.total), true) + pair(t('paid_amount'), money(b.deposit_paid)) + pair(t('remaining'), money(remaining), true)) +
+      section(t('insurance_and_terms'),
+        pair(t('insurance_type'), insLabel) + pair(t('insurance_company'), esc(b.insurance_company || '')) +
+        pair(t('insurance_policy'), esc(b.insurance_policy || '')) + pair(t('insurance_excess'), +b.insurance_excess > 0 ? money(b.insurance_excess) : '—') +
+        pair(t('km_limit'), kmPolicy) +
+        (b.second_driver_name ? pair(t('second_driver'), esc(b.second_driver_name) + (b.second_driver_license ? ' · ' + esc(b.second_driver_license) : '')) : '')) +
+      '</div>';
+
+    const inspection =
+      '<div class="cd-two">' +
+      section(t('inspection_out'),
+        pair(t('delivered_by'), esc(b.delivered_by || '')) + pair(t('delivered_date'), b.delivered_at ? date(b.delivered_at) : '—') +
+        pair(t('odometer_out'), b.delivered_mileage != null ? b.delivered_mileage + ' ' + t('km_unit') : '—') + pair(t('fuel_out'), fuelLabel(b.delivered_fuel)) +
+        '<div class="cd-pair col"><span>' + t('inspection') + '</span>' + chkView(b.delivered_checklist) + '</div>' +
+        '<div class="cd-pair col"><span>' + t('photos_before') + '</span>' + photoStrip(b.delivered_photos) + '</div>') +
+      section(t('inspection_in'),
+        pair(t('handover_by'), esc(b.handover_by || '')) + pair(t('handover_date'), b.handover_at ? date(b.handover_at) : '—') +
+        pair(t('odometer_in'), b.handover_mileage != null ? b.handover_mileage + ' ' + t('km_unit') : '—') + pair(t('fuel_in'), fuelLabel(b.handover_fuel)) +
+        (xkm && xkm.used != null ? pair(t('distance_driven'), xkm.used + ' ' + t('km_unit') + (xkm.extra > 0 ? ' · ' + t('extra_km') + ': ' + xkm.extra + ' (' + money(xkm.charge) + ')' : '')) : '') +
+        '<div class="cd-pair col"><span>' + t('inspection') + '</span>' + chkView(b.handover_checklist) + '</div>' +
+        '<div class="cd-pair col"><span>' + t('photos_after') + '</span>' + photoStrip(b.handover_photos) + '</div>') +
+      '</div>';
+
+    const termsBlock = section(t('rental_terms'), '<div class="cd-terms">' + esc(terms).replace(/\n/g, '<br>') + '</div>');
+
+    const signed = b.signature;
+    const signBlock =
+      '<div class="cd-sign">' +
+      '<div class="cd-sign-box"><div class="cd-sign-area">' + (signed ? '<img src="' + esc(b.signature) + '" alt="">' : '<canvas id="sigpad" width="420" height="150"></canvas>') + '</div>' +
+      '<div class="cd-sign-lb">' + t('customer_signature') + (signed && b.contract_signed_at ? ' · <span class="muted">' + t('signed_on') + ' ' + date(b.contract_signed_at) + '</span>' : '') + '</div>' +
+      (signed ? '' : '<div class="cd-sign-act no-print"><button class="rc-btn ghost sm" id="sigclear">' + t('clear') + '</button><button class="rc-btn sm" id="sigsave">' + t('save_signature') + '</button></div>') +
+      '</div>' +
+      '<div class="cd-sign-box"><div class="cd-sign-area"></div><div class="cd-sign-lb">' + t('lessor_signature') + '</div></div>' +
+      '</div>';
+
+    view().innerHTML =
+      '<div class="cd-actions no-print"><a class="pg-back" id="cback">‹ ' + t('bookings') + '</a><div class="sp" style="flex:1"></div>' +
+      '<button class="rc-btn ghost" id="cprint">' + RC.icon('receipt', 16) + ' ' + t('print_contract') + '</button></div>' +
+      '<div class="contract-doc" id="cdoc">' + header + parties + vehicle + periodPricing + inspection + termsBlock + signBlock + '</div>';
+
+    $('#cback').onclick = function () { location.href = 'bookings.html'; };
+    $('#cprint').onclick = function () { window.print(); };
+
+    // Signature pad
+    const cv = document.getElementById('sigpad');
+    if (cv) {
+      const ctx = cv.getContext('2d'); ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.strokeStyle = '#111';
+      let drawing = false, dirty = false, last = null;
+      const pos = function (e) { const r = cv.getBoundingClientRect(); const p = e.touches ? e.touches[0] : e; return { x: (p.clientX - r.left) * (cv.width / r.width), y: (p.clientY - r.top) * (cv.height / r.height) }; };
+      const start = function (e) { e.preventDefault(); drawing = true; last = pos(e); };
+      const move = function (e) { if (!drawing) return; e.preventDefault(); const p = pos(e); ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke(); last = p; dirty = true; };
+      const end = function () { drawing = false; };
+      cv.addEventListener('mousedown', start); cv.addEventListener('mousemove', move); window.addEventListener('mouseup', end);
+      cv.addEventListener('touchstart', start, { passive: false }); cv.addEventListener('touchmove', move, { passive: false }); cv.addEventListener('touchend', end);
+      $('#sigclear').onclick = function () { ctx.clearRect(0, 0, cv.width, cv.height); dirty = false; };
+      $('#sigsave').onclick = function () {
+        if (!dirty) { RC.toast(t('sign_here'), 'err'); return; }
+        cv.toBlob(async function (blob) {
+          const fd = new FormData(); fd.append('signature', blob, 'signature.png');
+          try { await RC.apiForm('POST', '/admin/bookings/' + id + '/sign', fd); RC.toast(t('saved')); PAGES.contract(); }
+          catch (e) { err(e); }
+        }, 'image/png');
+      };
+    }
   };
 
   document.addEventListener('DOMContentLoaded', boot);

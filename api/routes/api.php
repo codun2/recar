@@ -148,6 +148,8 @@ Route::prefix('admin')->group(function () {
             Route::patch('bookings/{booking}/status', [BookingController::class, 'updateStatus']);
             Route::post('bookings/{booking}/deliver', [BookingController::class, 'deliver']);
             Route::post('bookings/{booking}/handover', [BookingController::class, 'handover']);
+            Route::get('bookings/{booking}/contract', [BookingController::class, 'contract']);
+            Route::post('bookings/{booking}/sign', [BookingController::class, 'sign']);
             Route::delete('bookings/{booking}', [BookingController::class, 'destroy']);
         });
 

@@ -153,6 +153,15 @@ class InvoiceController extends Controller
                 ]);
             }
 
+            if ((float) $booking->insurance_fee > 0) {
+                $invoice->items()->create([
+                    'description' => 'رسوم تأمين',
+                    'quantity'    => 1,
+                    'unit_price'  => $booking->insurance_fee,
+                    'amount'      => $booking->insurance_fee,
+                ]);
+            }
+
             // Carry over any deposit the customer already paid.
             if ((float) $booking->deposit_paid > 0) {
                 $invoice->payments()->create([

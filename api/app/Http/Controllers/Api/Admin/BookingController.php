@@ -51,18 +51,28 @@ class BookingController extends Controller
             'delivery_address' => ['nullable', 'string', 'max:255'],
             'delivery_fee'     => ['nullable', 'numeric', 'min:0'],
             'notes'            => ['nullable', 'string'],
+            'insurance_type'        => ['nullable', 'in:none,third_party,comprehensive'],
+            'insurance_company'     => ['nullable', 'string', 'max:160'],
+            'insurance_policy'      => ['nullable', 'string', 'max:120'],
+            'insurance_excess'      => ['nullable', 'numeric', 'min:0'],
+            'insurance_fee'         => ['nullable', 'numeric', 'min:0'],
+            'second_driver_name'    => ['nullable', 'string', 'max:160'],
+            'second_driver_license' => ['nullable', 'string', 'max:80'],
+            'km_limit'              => ['nullable', 'integer', 'min:0'],
+            'extra_km_price'        => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $car = Car::findOrFail($data['car_id']);
         $status = $data['status'] ?? 'pending';
         $deliveryFee = (float) ($data['delivery_fee'] ?? 0);
+        $insuranceFee = (float) ($data['insurance_fee'] ?? 0);
 
         if (in_array($status, ['confirmed', 'active'], true)
             && ! $car->isAvailableBetween($data['start_date'], $data['end_date'])) {
             throw ValidationException::withMessages(['car_id' => ['السيارة محجوزة في هذه الفترة.']]);
         }
 
-        $priced = $this->price($car, $data['start_date'], $data['end_date'], (float) ($data['discount'] ?? 0), $deliveryFee);
+        $priced = $this->price($car, $data['start_date'], $data['end_date'], (float) ($data['discount'] ?? 0), $deliveryFee, $insuranceFee);
 
         // Delivery bookings may not be activated until fully paid.
         if ($status === 'active' && ! empty($data['delivery'])
@@ -108,19 +118,29 @@ class BookingController extends Controller
             'delivery_address' => ['nullable', 'string', 'max:255'],
             'delivery_fee'     => ['nullable', 'numeric', 'min:0'],
             'notes'            => ['nullable', 'string'],
+            'insurance_type'        => ['nullable', 'in:none,third_party,comprehensive'],
+            'insurance_company'     => ['nullable', 'string', 'max:160'],
+            'insurance_policy'      => ['nullable', 'string', 'max:120'],
+            'insurance_excess'      => ['nullable', 'numeric', 'min:0'],
+            'insurance_fee'         => ['nullable', 'numeric', 'min:0'],
+            'second_driver_name'    => ['nullable', 'string', 'max:160'],
+            'second_driver_license' => ['nullable', 'string', 'max:80'],
+            'km_limit'              => ['nullable', 'integer', 'min:0'],
+            'extra_km_price'        => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $start = $data['start_date'] ?? $booking->start_date->toDateString();
         $end = $data['end_date'] ?? $booking->end_date->toDateString();
         $discount = (float) ($data['discount'] ?? $booking->discount);
         $deliveryFee = array_key_exists('delivery_fee', $data) ? (float) $data['delivery_fee'] : (float) $booking->delivery_fee;
+        $insuranceFee = array_key_exists('insurance_fee', $data) ? (float) $data['insurance_fee'] : (float) $booking->insurance_fee;
 
         if ($booking->car && ! $booking->car->isAvailableBetween($start, $end, $booking->id)
             && in_array($booking->status, ['confirmed', 'active'], true)) {
             throw ValidationException::withMessages(['car_id' => ['السيارة محجوزة في هذه الفترة.']]);
         }
 
-        $priced = $this->price($booking->car, $start, $end, $discount, $deliveryFee);
+        $priced = $this->price($booking->car, $start, $end, $discount, $deliveryFee, $insuranceFee);
         $booking->update(array_merge($data, $priced));
 
         return response()->json($booking->load(['customer', 'car']));
@@ -173,6 +193,10 @@ class BookingController extends Controller
             'delivered_at'      => ['nullable', 'date'],
             'delivered_mileage' => ['nullable', 'integer', 'min:0'],
             'delivered_notes'   => ['nullable', 'string'],
+            'delivered_fuel'    => ['nullable', 'integer', 'min:0', 'max:8'],
+            'delivered_checklist' => ['nullable', 'string'],
+            'photos'            => ['nullable', 'array', 'max:12'],
+            'photos.*'          => ['image', 'max:6144'],
         ]);
 
         if ($booking->car && ! $booking->car->isAvailableBetween($booking->start_date->toDateString(), $booking->end_date->toDateString(), $booking->id)) {
@@ -186,6 +210,11 @@ class BookingController extends Controller
         $booking->delivered_at = $data['delivered_at'] ?? Carbon::now();
         $booking->delivered_mileage = $data['delivered_mileage'] ?? null;
         $booking->delivered_notes = $data['delivered_notes'] ?? null;
+        $booking->delivered_fuel = $data['delivered_fuel'] ?? null;
+        $booking->delivered_checklist = $this->decodeChecklist($request->input('delivered_checklist'));
+        if ($request->hasFile('photos')) {
+            $booking->delivered_photos = $this->storeInspectionPhotos($request->file('photos'));
+        }
         $booking->status = 'active';
         $booking->save();
 
@@ -218,6 +247,11 @@ class BookingController extends Controller
             'handover_mileage'  => ['nullable', 'integer', 'min:0'],
             'handover_notes'    => ['nullable', 'string'],
             'receipt'           => ['nullable', 'image', 'max:4096'],
+            'handover_fuel'     => ['nullable', 'integer', 'min:0', 'max:8'],
+            'handover_checklist' => ['nullable', 'string'],
+            'photos'            => ['nullable', 'array', 'max:12'],
+            'photos.*'          => ['image', 'max:6144'],
+            'charge_extra_km'   => ['nullable', 'boolean'],
             'settle_remaining'  => ['nullable', 'boolean'],
             'settle_method'     => ['nullable', 'in:cash,card,transfer,other'],
         ]);
@@ -226,8 +260,30 @@ class BookingController extends Controller
         $booking->handover_at = $data['handover_at'] ?? Carbon::now();
         $booking->handover_mileage = $data['handover_mileage'] ?? null;
         $booking->handover_notes = $data['handover_notes'] ?? null;
+        $booking->handover_fuel = $data['handover_fuel'] ?? null;
+        $booking->handover_checklist = $this->decodeChecklist($request->input('handover_checklist'));
+        if ($request->hasFile('photos')) {
+            $booking->handover_photos = $this->storeInspectionPhotos($request->file('photos'));
+        }
         if ($request->hasFile('receipt')) {
             $booking->handover_receipt = $this->storeImage($request->file('receipt'), 'handovers');
+        }
+
+        // Extra-distance charge: km driven beyond the agreed allowance.
+        $extra = $this->extraKm($booking);
+        if (! empty($data['charge_extra_km']) && $extra['charge'] > 0) {
+            $invoice = $this->ensureInvoice($booking);
+            $invoice->items()->create([
+                'description' => "مسافة إضافية {$extra['extra']} كم × ".rtrim(rtrim(number_format((float) $booking->extra_km_price, 2), '0'), '.'),
+                'quantity'    => $extra['extra'],
+                'unit_price'  => $booking->extra_km_price,
+                'amount'      => $extra['charge'],
+            ]);
+            // Extra-distance is an add-on to the amount due (not taxed), mirroring how
+            // delivery/insurance fees ride on the total rather than the rental subtotal.
+            $invoice->total = (float) $invoice->total + $extra['charge'];
+            $invoice->save();
+            $invoice->syncPaymentState();
         }
 
         // Settle the remaining balance on the booking's invoice (create one if needed).
@@ -308,6 +364,9 @@ class BookingController extends Controller
         if ((float) $booking->delivery_fee > 0) {
             $invoice->items()->create(['description' => 'رسوم توصيل', 'quantity' => 1, 'unit_price' => $booking->delivery_fee, 'amount' => $booking->delivery_fee]);
         }
+        if ((float) $booking->insurance_fee > 0) {
+            $invoice->items()->create(['description' => 'رسوم تأمين', 'quantity' => 1, 'unit_price' => $booking->insurance_fee, 'amount' => $booking->insurance_fee]);
+        }
         // Carry over any deposit already paid.
         if ((float) $booking->deposit_paid > 0) {
             $invoice->payments()->create([
@@ -328,36 +387,122 @@ class BookingController extends Controller
             'car_id'       => ['required', 'integer', 'exists:cars,id'],
             'start_date'   => ['required', 'date'],
             'end_date'     => ['required', 'date', 'after_or_equal:start_date'],
-            'except'       => ['nullable', 'integer'],
-            'delivery_fee' => ['nullable', 'numeric', 'min:0'],
+            'except'        => ['nullable', 'integer'],
+            'delivery_fee'  => ['nullable', 'numeric', 'min:0'],
+            'insurance_fee' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $car = Car::findOrFail($data['car_id']);
         $available = $car->isAvailableBetween($data['start_date'], $data['end_date'], $data['except'] ?? null);
-        $priced = $this->price($car, $data['start_date'], $data['end_date'], 0, (float) ($data['delivery_fee'] ?? 0));
+        $priced = $this->price($car, $data['start_date'], $data['end_date'], 0, (float) ($data['delivery_fee'] ?? 0), (float) ($data['insurance_fee'] ?? 0));
 
         return response()->json(array_merge(['available' => $available], $priced));
     }
 
-    /** Compute days + totals from the car (offer) price, tax rate and delivery fee. */
-    private function price(Car $car, string $start, string $end, float $discount, float $deliveryFee = 0): array
+    /** Compute days + totals from the car (offer) price, tax rate, delivery + insurance fees. */
+    private function price(Car $car, string $start, string $end, float $discount, float $deliveryFee = 0, float $insuranceFee = 0): array
     {
         $days = max(1, Carbon::parse($start)->diffInDays(Carbon::parse($end)));
         $daily = $car->effectivePrice();
         $subtotal = $daily * $days;
-        $taxable = max(0, $subtotal - $discount) + $deliveryFee;
+        $taxable = max(0, $subtotal - $discount) + $deliveryFee + $insuranceFee;
         $taxRate = (float) ($car->company->tax_rate ?? 0);
         $tax = round($taxable * $taxRate / 100, 2);
         $total = round($taxable + $tax, 2);
 
         return [
-            'days'         => $days,
-            'daily_price'  => $daily,
-            'subtotal'     => round($subtotal, 2),
-            'discount'     => round($discount, 2),
-            'delivery_fee' => round($deliveryFee, 2),
-            'tax'          => $tax,
-            'total'        => $total,
+            'days'          => $days,
+            'daily_price'   => $daily,
+            'subtotal'      => round($subtotal, 2),
+            'discount'      => round($discount, 2),
+            'delivery_fee'  => round($deliveryFee, 2),
+            'insurance_fee' => round($insuranceFee, 2),
+            'tax'           => $tax,
+            'total'         => $total,
         ];
+    }
+
+    /** Decode a JSON condition checklist string into a clean key=>state map. */
+    private function decodeChecklist(?string $raw): ?array
+    {
+        if (! $raw) {
+            return null;
+        }
+        $decoded = json_decode($raw, true);
+        if (! is_array($decoded)) {
+            return null;
+        }
+        $out = [];
+        foreach ($decoded as $key => $state) {
+            if (is_string($key) && in_array($state, ['ok', 'note', 'bad'], true)) {
+                $out[substr($key, 0, 40)] = $state;
+            }
+        }
+
+        return $out ?: null;
+    }
+
+    /** Store a batch of uploaded inspection photos and return their web paths. */
+    private function storeInspectionPhotos(array $files): array
+    {
+        $paths = [];
+        foreach ($files as $file) {
+            $paths[] = $this->storeImage($file, 'inspections');
+        }
+
+        return $paths;
+    }
+
+    /** Distance driven vs. the agreed allowance, and the resulting extra charge. */
+    private function extraKm(Booking $booking): array
+    {
+        $out = ['used' => null, 'allowed' => null, 'extra' => 0, 'charge' => 0.0];
+        if ($booking->delivered_mileage === null || $booking->handover_mileage === null) {
+            return $out;
+        }
+        $used = max(0, (int) $booking->handover_mileage - (int) $booking->delivered_mileage);
+        $out['used'] = $used;
+        if (! $booking->km_limit) {
+            return $out; // unlimited mileage
+        }
+        $allowed = (int) $booking->km_limit * max(1, (int) $booking->days);
+        $out['allowed'] = $allowed;
+        $extra = max(0, $used - $allowed);
+        $out['extra'] = $extra;
+        $out['charge'] = round($extra * (float) $booking->extra_km_price, 2);
+
+        return $out;
+    }
+
+    /**
+     * Everything needed to render/print a rental agreement for one booking:
+     * the booking, renter, car, company and the company's contract terms.
+     */
+    public function contract(Booking $booking)
+    {
+        $booking->load(['customer', 'car', 'creator:id,name', 'invoice']);
+        $company = $booking->company;
+
+        return response()->json([
+            'booking'  => $booking,
+            'company'  => $company,
+            'settings' => \App\Models\Setting::allAsMap(),
+            'extra_km' => $this->extraKm($booking),
+        ]);
+    }
+
+    /** Store the renter's signature (image) against the booking and stamp it signed. */
+    public function sign(Request $request, Booking $booking)
+    {
+        $request->validate([
+            'signature' => ['required', 'image', 'max:2048'],
+        ]);
+
+        $this->deleteImage($booking->signature);
+        $booking->signature = $this->storeImage($request->file('signature'), 'signatures');
+        $booking->contract_signed_at = Carbon::now();
+        $booking->save();
+
+        return response()->json($booking->fresh());
     }
 }
