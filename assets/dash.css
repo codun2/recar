@@ -442,7 +442,7 @@ table.rc-table{width:100%;border-collapse:collapse;font-size:.9rem}
 .ic-opt{cursor:pointer;font-size:.72rem;font-weight:700;padding:3px 8px;border-radius:7px;border:1px solid var(--line);color:var(--muted);background:var(--card);user-select:none}
 .ic-opt input{display:none}
 .ic-opt.ok:has(input:checked){background:rgba(22,163,74,.14);border-color:var(--green);color:var(--green)}
-.ic-opt.note:has(input:checked){background:rgba(234,138,10,.14);border-color:var(--orange);color:var(--orange)}
+.ic-opt.note:has(input:checked){background:rgba(37,99,235,.14);border-color:var(--blue);color:var(--blue)}
 .ic-opt.bad:has(input:checked){background:rgba(220,38,38,.14);border-color:var(--red);color:var(--red)}
 .insp-prev{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
 .insp-thumb{width:62px;height:62px;border-radius:9px;background-size:cover;background-position:center;border:1px solid var(--line)}
@@ -474,8 +474,8 @@ table.rc-table{width:100%;border-collapse:collapse;font-size:.9rem}
 .cd-chk{display:flex;flex-wrap:wrap;gap:5px}
 .cd-chk-i{display:inline-flex;align-items:center;gap:5px;font-size:.76rem;font-weight:600;padding:2px 8px;border-radius:7px;background:var(--card);border:1px solid var(--line)}
 .cd-chk-i i{width:8px;height:8px;border-radius:50%;display:inline-block}
-.cd-chk-i.ok i{background:var(--green)} .cd-chk-i.note i{background:var(--orange)} .cd-chk-i.bad i{background:var(--red)}
-.cd-chk-i.bad{border-color:var(--red);color:var(--red)} .cd-chk-i.note{border-color:var(--orange);color:var(--orange)}
+.cd-chk-i.ok i{background:var(--green)} .cd-chk-i.note i{background:var(--blue)} .cd-chk-i.bad i{background:var(--red)}
+.cd-chk-i.bad{border-color:var(--red);color:var(--red)} .cd-chk-i.note{border-color:var(--blue);color:var(--blue)}
 .cd-photos{display:flex;flex-wrap:wrap;gap:6px}
 .cd-photo{width:74px;height:74px;border-radius:8px;background-size:cover;background-position:center;border:1px solid var(--line);display:block}
 .cd-terms{font-size:.84rem;line-height:1.9;color:var(--text);white-space:normal}
